@@ -10,9 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define GL_GLEXT_PROTOTYPES
-
-float pts[200000][3];
+float calculatedPts[200000][3];
 
 static GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0;
 static GLfloat view_posz = 60.0;
@@ -26,6 +24,10 @@ double dt = 0.007;
 double x = 1;
 double y = 1;
 double z = 1;
+
+int rVal = 255;
+int gVal = 255;
+int bVal = 255;
 
 int indexVal = 0;
 
@@ -71,8 +73,8 @@ void display() {
 
 	for(int i = 0; i<indexVal;)
 	  {
-	    glColor3ub(rand()%256,rand()%256,rand()%256);
-	    glVertex3fv(pts[i]);
+	    glColor3ub(rVal,gVal,bVal);
+	    glVertex3fv(calculatedPts[i]);
 	    i++;
 	  }
 	  
@@ -90,10 +92,10 @@ void display() {
 		else iter+=iterInc;
 		}*/
 
-	//glWindowPos2i(5,5);
+	glRasterPos2i(10,10);
 	Print("Angle=%.1f",view_roty);
 	ErrCheck("display");
-	//glFlush();
+	glFlush();
 	
 	glutSwapBuffers();
 	
@@ -139,39 +141,42 @@ static void special(int k, int x, int y) {
 
 static void key(unsigned char k, int x, int y) {
 	switch (k) {
-		case 'q':
-			view_rotx += 5.0;
-			break;
-		case 'a':
-			view_rotx -= 5.0;
-			break;
-		case 'w':
-			view_roty += 5.0;
-			break;
-		case 's':
-			view_roty -= 5.0;
-			break;
-		case 'e':
-			view_rotz += 5.0;
-			break;
-		case 'd':
-			view_rotz -= 5.0;
-			break;
 		case 'r':
-			indexVal = 0;
-			break;
-        	case 'y':
+		         rVal = 255;
+		         gVal = 0;
+		         bVal = 0;
+		         break;
+
+	        case 'g':
+		         rVal = 0;
+		         gVal = 255;
+		         bVal = 0;
+		         break;
+
+               case 'b':
+	                 rVal = 0;
+		         gVal = 0;
+		         bVal = 255;
+		         break;
+		     
+        	case 'q':
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
 			view_posz -= 1;
 			gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
 			break;
-		case 'h':
+		case 'a':
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
 			view_posz += 1;
 			gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
 			break;
+	       case 'z':
+		        rVal = 255;
+		        gVal = 255;
+		        bVal = 255;
+		        indexVal = 0;
+		        break;
 		default:
 			return;
 	}
@@ -188,9 +193,9 @@ static void idle(void) {
       y += dt*dy;
       z += dt*dz;
 
-      pts[indexVal+1][0] = x;
-      pts[indexVal+1][1] = y;
-      pts[indexVal+1][2] = z;
+      calculatedPts[indexVal+1][0] = x;
+      calculatedPts[indexVal+1][1] = y;
+      calculatedPts[indexVal+1][2] = z;
 
       indexVal++;
       
