@@ -9,6 +9,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 float calculatedPts[200000][3];
 
@@ -90,7 +91,11 @@ void display() {
 	glEnd();
 	
 	glRasterPos2i(10,10);
-	Print("Angle=%.1f",view_roty);
+	view_rotx = fmod(view_rotx,360);
+	view_roty = fmod(view_roty,360);
+	view_rotz = fmod(view_rotz,360);
+	
+	Print("X-Angle=%.1f Y-Angle=%.1f Z-Angle=%.1f",view_rotx,view_roty,view_rotz);
 
 	ErrCheck("display");
 
