@@ -1,26 +1,60 @@
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif
+
+#include <stdarg.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
-int numPts = 200000;
-double th=0;  //  Rotation angle
+
+#define GL_GLEXT_PROTOTYPES
+
 float pts[200000][3];
+
 static GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0;
 static GLfloat view_posz = 60.0;
+
 /*  Lorenz Parameters  */
 double s  = 10;
 double b  = 2.6666;
 double r  = 28;
 
-double dt = 0.001;
+double dt = 0.007;
 double x = 1;
 double y = 1;
 double z = 1;
 
-int iter = 0;
-int iterInc = 10;
 int indexVal = 0;
+
+#define LEN 8192  //  Maximum amount of text
+void Print(const char* format , ...)
+{
+   char    buf[LEN]; // Text storage
+   char*   ch=buf;   // Text pointer
+   
+   //  Create text to be display
+   va_list args;
+   va_start(args,format);
+   vsnprintf(buf,LEN,format,args);
+   va_end(args);
+
+   //  Display text string
+   while (*ch)
+      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,*ch++);
+}
+
+
+void ErrCheck(char* where)
+{
+  int err = glGetError();
+
+  if(err)
+    fprintf(stderr, "ERROR: %s [%s]\n", gluErrorString(err), where);
+}
+
 
 void display() {
 
@@ -31,13 +65,15 @@ void display() {
 	glRotatef(view_roty, 0.0, 1.0, 0.0);
 	glRotatef(view_rotz, 0.0, 0.0, 1.0);
 
+	glLineWidth(1.5);
 	glBegin(GL_LINE_STRIP);
 	int i = 0;
 
 	for(int i = 0; i<indexVal;)
 	  {
+	    glColor3ub(rand()%256,rand()%256,rand()%256);
 	    glVertex3fv(pts[i]);
-	    i +=10;
+	    i++;
 	  }
 	  
 
@@ -53,15 +89,20 @@ void display() {
 		if( iter + iterInc > numPts ) iter = numPts;
 		else iter+=iterInc;
 		}*/
-	
-	glFlush();
+
+	//glWindowPos2i(5,5);
+	Print("Angle=%.1f",view_roty);
+	ErrCheck("display");
+	//glFlush();
 	glutSwapBuffers();
 	
 	glPopMatrix();
 	
 }
 
+
 static void reshape(int width, int height) {
+
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
   glViewport(0, 0, (GLint) width, (GLint) height);
@@ -71,7 +112,8 @@ static void reshape(int width, int height) {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -60.0);
-  }
+
+}
 
 static void special(int k, int x, int y) {
 	switch (k) {
@@ -115,18 +157,9 @@ static void key(unsigned char k, int x, int y) {
 			view_rotz -= 5.0;
 			break;
 		case 'r':
-			iter = 0;
+			indexVal = 0;
 			break;
-		case 'f':
-			iter = numPts;
-			break;
-		case 't':
-			iterInc += 5;
-			break;
-		case 'g':
-			if( iterInc - 5 >- 0 ) iterInc -= 5;
-			break;
-		case 'y':
+        	case 'y':
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
 			view_posz -= 1;
@@ -160,50 +193,28 @@ static void idle(void) {
 
       indexVal++;
       
-      printf("%f %f %f\n", x,y,z);
+      //printf("%f %f %f\n", x,y,z);
       glutPostRedisplay();
 }
 
-static void lorenzGen(void) {
-	int i;
-	/*  Coordinates  */
-	float x = pts[0][0] = 1;
-	float y = pts[0][1] = 1;
-	float z = pts[0][2] = 1;
-	/*  Time step  */
-	float dt = 0.001;
-
-	for (i=0;i<numPts-1;i++)
-	{	
-		float dx = s*(y-x);
-		float dy = x*(r-z)-y;
-		float dz = x*y - b*z;
-		x += dt*dx;
-		y += dt*dy;
-		z += dt*dz;
-		
-		pts[i+1][0] = x;
-		pts[i+1][1] = y;
-		pts[i+1][2] = z;
-		
-	}
-}
-
 int main(int argc,char* argv[]) {
-  //lorenzGen();
-	
+ 	
 	glutInit(&argc,argv);
 	
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+
+	//size of the initial window
 	glutInitWindowPosition(50, 50);
-  glutInitWindowSize(500, 500);
-	
+	glutInitWindowSize(500, 500);
+	//Window title
 	glutCreateWindow("Lorenz Attractor");
-	
+
+	//special call backs
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutSpecialFunc(special);
-	//glutKeyboardFunc(key);
+	glutKeyboardFunc(key);
+	//Idle function
 	glutIdleFunc(idle);
 	
 	glutMainLoop();

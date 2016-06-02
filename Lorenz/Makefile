@@ -2,7 +2,7 @@ CC = gcc
 
 #flags
 CFLAGS = -oWall
-GLUTFLGS = -lglut -lGL -lGLU
+GLUTFLGS = -lglut -lGL -lGLU -Wno-write-strings
 
 #target
 TARGET = lorenz
