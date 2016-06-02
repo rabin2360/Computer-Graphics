@@ -94,6 +94,7 @@ void display() {
 	Print("Angle=%.1f",view_roty);
 	ErrCheck("display");
 	//glFlush();
+	
 	glutSwapBuffers();
 	
 	glPopMatrix();
