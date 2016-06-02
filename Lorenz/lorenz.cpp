@@ -25,13 +25,17 @@ double x = 1;
 double y = 1;
 double z = 1;
 
+/*values for r,g,b*/
 int rVal = 255;
 int gVal = 255;
 int bVal = 255;
 
+/*keeps count of all the calculated co-ordinates in the x-y-z plane*/
 int indexVal = 0;
 
 #define LEN 8192  //  Maximum amount of text
+
+//printing the text on the screen
 void Print(const char* format , ...)
 {
    char    buf[LEN]; // Text storage
@@ -49,6 +53,7 @@ void Print(const char* format , ...)
 }
 
 
+//printing the error check values
 void ErrCheck(char* where)
 {
   int err = glGetError();
@@ -58,18 +63,21 @@ void ErrCheck(char* where)
 }
 
 
+//display function
 void display() {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
-		
+
+	//rotation functions
 	glRotatef(view_rotx, 1.0, 0.0, 0.0);
 	glRotatef(view_roty, 0.0, 1.0, 0.0);
 	glRotatef(view_rotz, 0.0, 0.0, 1.0);
 
 	glLineWidth(1.5);
 	glBegin(GL_LINE_STRIP);
-	int i = 0;
+	
+	int i;
 
 	for(int i = 0; i<indexVal;)
 	  {
@@ -81,29 +89,18 @@ void display() {
 
 	glEnd();
 	
-	/*while( i < iter && i < numPts ) {
-		glColor3fv(pts[i]);
-		glVertex3fv(pts[i++]);
-	}
-	glEnd();
-	
-	if( iter < numPts ) {
-		if( iter + iterInc > numPts ) iter = numPts;
-		else iter+=iterInc;
-		}*/
-
 	glRasterPos2i(10,10);
 	Print("Angle=%.1f",view_roty);
+
 	ErrCheck("display");
-	glFlush();
-	
-	glutSwapBuffers();
-	
+
+	glFlush();	
+	glutSwapBuffers();	
 	glPopMatrix();
 	
 }
 
-
+//reshaping the screen and adjusting the coordinates
 static void reshape(int width, int height) {
 
   GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -118,6 +115,7 @@ static void reshape(int width, int height) {
 
 }
 
+//special characters function
 static void special(int k, int x, int y) {
 	switch (k) {
 		case GLUT_KEY_UP:
@@ -139,6 +137,7 @@ static void special(int k, int x, int y) {
 }
 
 
+//special key functions
 static void key(unsigned char k, int x, int y) {
 	switch (k) {
 		case 'r':
@@ -183,7 +182,7 @@ static void key(unsigned char k, int x, int y) {
 	glutPostRedisplay();
 }
 
-
+//idle function
 static void idle(void) {
 
       double dx = s*(y-x);
