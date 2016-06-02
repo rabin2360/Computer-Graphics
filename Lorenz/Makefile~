@@ -1,5 +1,0 @@
-all: lorenz.cpp
-	gcc -oWall lorenz.cpp -o lorenz -lglut -lGL -lGLU
-
-clean:
-	$(RM) lorenz
