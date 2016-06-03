@@ -26,31 +26,27 @@ double x = 1;
 double y = 1;
 double z = 1;
 
-/*values for r,g,b*/
-int rVal = 255;
-int gVal = 255;
-int bVal = 255;
-
-/*keeps count of all the calculated co-ordinates in the x-y-z plane*/
-int indexVal = 0;
+/*height and width*/
+int gHeight=0;
+int gWidth=0;
 
 #define LEN 8192  //  Maximum amount of text
 
 //printing the text on the screen
 void Print(const char* format , ...)
 {
-   char    buf[LEN]; // Text storage
-   char*   ch=buf;   // Text pointer
+  char    buf[LEN]; // Text storage
+  char*   ch=buf;   // Text pointer
    
-   //  Create text to be display
-   va_list args;
-   va_start(args,format);
-   vsnprintf(buf,LEN,format,args);
-   va_end(args);
+  //  Create text to be display
+  va_list args;
+  va_start(args,format);
+  vsnprintf(buf,LEN,format,args);
+  va_end(args);
 
-   //  Display text string
-   while (*ch)
-      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,*ch++);
+  //  Display text string
+  while (*ch)
+    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,*ch++);
 }
 
 
@@ -67,47 +63,48 @@ void ErrCheck(char* where)
 //display function
 void display() {
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glPushMatrix();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glPushMatrix();
 
-	//rotation functions
-	glRotatef(view_rotx, 1.0, 0.0, 0.0);
-	glRotatef(view_roty, 0.0, 1.0, 0.0);
-	glRotatef(view_rotz, 0.0, 0.0, 1.0);
+  //rotation functions
+  glRotatef(view_rotx, 1.0, 0.0, 0.0);
+  glRotatef(view_roty, 0.0, 1.0, 0.0);
+  glRotatef(view_rotz, 0.0, 0.0, 1.0);
 
-	glLineWidth(1.5);
-	glBegin(GL_LINE_STRIP);
+  glBegin(GL_LINE_STRIP);
 	
-	int i;
-
-	for(int i = 0; i<indexVal;)
-	  {
-	    glColor3ub(rVal,gVal,bVal);
-	    glVertex3fv(calculatedPts[i]);
-	    i++;
-	  }
+  int i;
+  for(i = 0; i<50000;i++)
+    {
+      glColor3fv(calculatedPts[i]);
+      glVertex3fv(calculatedPts[i]);
+    }
 	  
 
-	glEnd();
+  glEnd();
+  glPopMatrix();
 	
-	glRasterPos2i(10,10);
-	view_rotx = fmod(view_rotx,360);
-	view_roty = fmod(view_roty,360);
-	view_rotz = fmod(view_rotz,360);
 	
-	Print("X-Angle=%.1f Y-Angle=%.1f Z-Angle=%.1f",view_rotx,view_roty,view_rotz);
+  glRasterPos2i(-300,-65);
+  view_rotx = fmod(view_rotx,360);
+  view_roty = fmod(view_roty,360);
+  view_rotz = fmod(view_rotz,360);
+	
+  Print("s=%.1f b=%.1f r=%.1f",s,b,r);
 
-	ErrCheck("display");
+  ErrCheck("display");
 
-	glFlush();	
-	glutSwapBuffers();	
-	glPopMatrix();
+  glFlush();	
+  glutSwapBuffers();	
+
 	
 }
 
 //reshaping the screen and adjusting the coordinates
 static void reshape(int width, int height) {
-
+  gHeight = height;
+  gWidth = width;
+  
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
   glViewport(0, 0, (GLint) width, (GLint) height);
@@ -122,112 +119,133 @@ static void reshape(int width, int height) {
 
 //special characters function
 static void special(int k, int x, int y) {
-	switch (k) {
-		case GLUT_KEY_UP:
-			view_rotx += 5.0;
-			break;
-		case GLUT_KEY_DOWN:
-			view_rotx -= 5.0;
-			break;
-		case GLUT_KEY_LEFT:
-			view_roty += 5.0;
-			break;
-		case GLUT_KEY_RIGHT:
-			view_roty -= 5.0;
-			break;
-		default:
-			return;
-	}
+  switch (k) {
+  case GLUT_KEY_UP:
+    view_rotx += 5.0;
+    break;
+    
+  case GLUT_KEY_DOWN:
+    view_rotx -= 5.0;
+    break;
+    
+  case GLUT_KEY_LEFT:
+    view_roty += 5.0;
+    break;
+    
+  case GLUT_KEY_RIGHT:
+    view_roty -= 5.0;
+    break;
+    
+  default:
+    return;
+    
+  }
   glutPostRedisplay();
 }
 
+static void calculateLorenz(void)
+{
+  //reset x,y,z
+  x = 1;
+  y = 1;
+  z = 1;
+  //for data point in the coordiate system
+  calculatedPts[0][0] = x;
+  calculatedPts[0][1] = y;
+  calculatedPts[0][2] = z;
 
-//special key functions
-static void key(unsigned char k, int x, int y) {
-	switch (k) {
-		case 'r':
-		         rVal = 255;
-		         gVal = 0;
-		         bVal = 0;
-		         break;
-
-	        case 'g':
-		         rVal = 0;
-		         gVal = 255;
-		         bVal = 0;
-		         break;
-
-               case 'b':
-	                 rVal = 0;
-		         gVal = 0;
-		         bVal = 255;
-		         break;
-		     
-        	case 'q':
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-			view_posz -= 1;
-			gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
-			break;
-		case 'a':
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-			view_posz += 1;
-			gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
-			break;
-	       case 'z':
-		        rVal = 255;
-		        gVal = 255;
-		        bVal = 255;
-		        indexVal = 0;
-		        break;
-		default:
-			return;
-	}
-	glutPostRedisplay();
-}
-
-//idle function
-static void idle(void) {
-
+  int i;
+  for(i = 1; i<50000; i++)
+    {
       double dx = s*(y-x);
       double dy = x*(r-z)-y;
       double dz = x*y - b*z;
+
       x += dt*dx;
       y += dt*dy;
       z += dt*dz;
 
-      calculatedPts[indexVal+1][0] = x;
-      calculatedPts[indexVal+1][1] = y;
-      calculatedPts[indexVal+1][2] = z;
+      calculatedPts[i][0] = x;
+      calculatedPts[i][1] = y;
+      calculatedPts[i][2] = z;
+    }
+}
 
-      indexVal++;
-      
-      //printf("%f %f %f\n", x,y,z);
-      glutPostRedisplay();
+//special key functions
+static void key(unsigned char k, int x, int y) {
+  switch (k) {
+  case 'q':
+    s++;
+    break;
+
+  case 'w':
+    s--;
+    break;
+
+  case 'a':
+    b += 0.1;
+    break;
+
+  case 's':
+    b-= 0.1;
+    break;
+
+  case 'z':
+    r++;
+    break;
+
+  case 'x':
+    r--;
+    break;
+  
+  case 'e':
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    view_posz -= 1;
+    gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
+    break;
+    
+  case 'r':
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    view_posz += 1;
+    gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
+    break;
+
+  case 'd':
+    s = 10;
+    b = 2.6666;
+    r = 28;
+    break;
+    
+  default:
+    return;
+  }
+  
+  calculateLorenz();  
+  glutPostRedisplay();
 }
 
 int main(int argc,char* argv[]) {
- 	
-	glutInit(&argc,argv);
-	
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+  //getting the data points for the intial display
+  calculateLorenz();
+  
+  glutInit(&argc,argv);	
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 
-	//size of the initial window
-	glutInitWindowPosition(50, 50);
-	glutInitWindowSize(500, 500);
-	//Window title
-	glutCreateWindow("Lorenz Attractor");
+  //size of the initial window
+  glutInitWindowPosition(50, 50);
+  glutInitWindowSize(500, 500);
+  //Window title
+  glutCreateWindow("Assignment 1: Rabin Ranabhat");
 
-	//special call backs
-	glutDisplayFunc(display);
-	glutReshapeFunc(reshape);
-	glutSpecialFunc(special);
-	glutKeyboardFunc(key);
-	//Idle function
-	glutIdleFunc(idle);
+  //special call backs
+  glutDisplayFunc(display);
+  glutReshapeFunc(reshape);
+  glutSpecialFunc(special);
+  glutKeyboardFunc(key);
 	
-	glutMainLoop();
+  glutMainLoop();
 	
-	return 0;
+  return 0;
 }
