@@ -75,7 +75,8 @@ void display() {
   glRotatef(view_rotz, 0.0, 0.0, 1.0);
 
   glBegin(GL_LINE_STRIP);
-	
+
+  //painting the lorenz attractor using stored points
   int i;
   for(i = 0; i<50000;i++)
     {
@@ -240,7 +241,7 @@ int main(int argc,char* argv[]) {
 
   //size of the initial window
   glutInitWindowPosition(50, 50);
-  glutInitWindowSize(500, 500);
+  glutInitWindowSize(600, 600);
   //Window title
   glutCreateWindow("Assignment 1: Rabin Ranabhat");
 
