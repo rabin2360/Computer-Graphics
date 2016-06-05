@@ -1,3 +1,6 @@
+//Name: Rabin Ranabhat
+//Assignment1: Lorenz Attractor
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -81,17 +84,18 @@ void display() {
     }
 	  
 
-  glEnd();
+   glEnd();
+
+   //display s,b,r values
   glPopMatrix();
-	
-	
+
+  glPushMatrix();
+  glColor3ub(255,255,255);	
   glRasterPos2i(-300,-65);
-  view_rotx = fmod(view_rotx,360);
-  view_roty = fmod(view_roty,360);
-  view_rotz = fmod(view_rotz,360);
-	
+
   Print("s=%.1f b=%.1f r=%.1f",s,b,r);
 
+  glPopMatrix();
   ErrCheck("display");
 
   glFlush();	
@@ -149,6 +153,7 @@ static void calculateLorenz(void)
   x = 1;
   y = 1;
   z = 1;
+  
   //for data point in the coordiate system
   calculatedPts[0][0] = x;
   calculatedPts[0][1] = y;
