@@ -1,2 +1,4 @@
 helloWorld
-*~
+*
+!*.c
+!Makefile
