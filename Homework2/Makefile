@@ -1,7 +1,7 @@
 CC = gcc
 
 #flags
-CFLAGS = -oWall
+CFLAGS =-O3 -Wall
 GLUTFLGS = -lglut -lGL -lGLU -lGLEW -Wno-write-strings -lm
 
 #target
@@ -15,4 +15,4 @@ $(TARGET): $(TARGET).cpp
 
 #remove
 clean:
-	$(RM) $(TARGET)
+	$(RM) $(TARGET) *.o *.a

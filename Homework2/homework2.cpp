@@ -15,25 +15,39 @@
 #include <math.h>
 
 #define GL_GLEXT_PROTOTYPES
+//  Macro for sin & cos in degrees
+#define Cos(th) cos(3.1415927/180*(th))
+#define Sin(th) sin(3.1415927/180*(th))
 
-float calculatedPts[200000][3];
+static GLfloat view_rotx = 10.0, view_roty = -10.0, view_rotz = 0.0;
+//static GLfloat view_posz = 60.0;
 
-static GLfloat view_rotx = 0.0, view_roty = 0.0, view_rotz = 0.0;
-static GLfloat view_posz = 60.0;
+bool draw_axis = true;
 
-/*  Lorenz Parameters  */
-double s  = 10;
-double b  = 2.6666;
-double r  = 28;
+//dimension of the world
+double dim = 2.0;
+GLfloat h = 1;
 
-double dt = 0.007;
-double x = 1;
-double y = 1;
-double z = 1;
+//variables for perspective projections
+double fov = 55;
+double aspectRatio = 1;
+int projectionMode = 0;
 
-/*height and width*/
-int gHeight=0;
-int gWidth=0;
+void Project(int mode)
+{
+  glMatrixMode(GL_PROJECTION);
+
+  glLoadIdentity();
+
+  if(mode)
+    gluPerspective(fov, aspectRatio, dim, -dim);
+  else
+    glOrtho(-aspectRatio*dim,+aspectRatio*dim,-dim,+dim,-dim,+dim);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+}
 
 #define LEN 8192  //  Maximum amount of text
 
@@ -64,55 +78,194 @@ void ErrCheck(char* where)
     fprintf(stderr, "ERROR: %s [%s]\n", gluErrorString(err), where);
 }
 
+void drawBuilding()
+{
+  glPushMatrix();
+  glColor3f(1.0,1.0,0.0);
+  //body of the house
+  glutSolidCube(0.5);
+  glPopMatrix();
+    
+  //roof
+  glPushMatrix();
+  glColor3f(1.0,1.0,1.0);
+  glTranslatef(0,0,0.2);
+ 
+  glutSolidCone(0.5, 0.6, 50, 5);
+  glPopMatrix();
+
+}
+
+void drawAxes()
+{
+  //drawing the axes
+  GLfloat axesLen = 1.5;
+  
+  glColor3f(1.0, 1.0, 1.0);
+  glBegin(GL_LINES);
+  glVertex3f(0.0,0.0,0.0);
+  glVertex3f(axesLen,0.0,0.0);
+  glVertex3f(0.0,0.0,0.0);
+  glVertex3f(0.0,axesLen,0.0);
+  glVertex3f(0.0,0.0,0.0);
+  glVertex3f(0.0,0.0,axesLen);
+  glEnd();
+
+  //giving names to the axes
+
+  
+  glRasterPos3d(axesLen, 0.0, 0.0);
+  Print("X");
+  glRasterPos3d(0.0, axesLen, 0.0);
+  Print("Y");
+  glRasterPos3d(0.0, 0.0, axesLen);
+  Print("Z");
+}
+
+//draw the floor for the display
+void drawFloor()
+{
+  glPushMatrix();
+
+  //draw a 3-D object
+  //glPointSize(6);
+
+  //drawing the floor
+  glColor3f(0.0, 1.0, 0.0);
+  glBegin(GL_QUADS);
+  glVertex3f(-1.8,0.0,-1.2);  
+  glVertex3f(1.5,0.0,-1.2);
+  glVertex3f(1.5,0.0,1.2);
+  glVertex3f(-1.8,0.0,1.2);
+  glEnd();
+  
+  glPopMatrix();   
+
+}
+
+/*void drawText()
+{
+  glPushMatrix();
+  glWindowPos2i(5,5);
+  Print("Angle=%d,%d",view_rotx,view_roty);
+  glPopMatrix();
+}
+*/
+
+//code that draws the torus
+static void torus(int numc, int numt)
+{
+   int i, j, k;
+   double s, t, x, y, z, twopi;
+
+   twopi = 2 * (double)M_PI;
+   for (i = 0; i < numc; i++) {
+      glBegin(GL_QUAD_STRIP);
+      for (j = 0; j <= numt; j++) {
+         for (k = 1; k >= 0; k--) {
+            s = (i + k) % numc + 0.5;
+            t = j % numt;
+
+            x = (0.2+.1*cos(s*twopi/numc))*cos(t*twopi/numt);
+            y = (0.2+.1*cos(s*twopi/numc))*sin(t*twopi/numt);
+            z = .1 * sin(s * twopi / numc);
+            glVertex3f(x, y, z);
+         }
+      }
+      glEnd();
+   }
+}
 
 //display function
 void display() {
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glPushMatrix();
-
-  //rotation functions
-  glRotatef(view_rotx, 1.0, 0.0, 0.0);
-  glRotatef(view_roty, 0.0, 1.0, 0.0);
-  glRotatef(view_rotz, 0.0, 0.0, 1.0);
-
-  //draw a 3-D object
-  //glPointSize(6);
-  glColor3f(0, 1, 0);
-  glBegin(GL_QUADS);
+  glEnable(GL_DEPTH_TEST);
   
-  glVertex3f(0,0,0);  
-  glVertex3f(0.9,0,0);
-  glVertex3f(0.9,0.9,0);
-  glVertex3f(0,0.9,0);
-  //glVertex3f(-1.0f, 1.0f, 1.0f);
-  //glVertex3f(-1.0f, 1.0f,  1.0f);
-  //glVertex3f( 1.0f, 1.0f,  1.0f);
+  //loading identity - otherwise, rotate function is very choppy
+  glLoadIdentity();
 
-  glEnd();
-  glPopMatrix();   
+  if(projectionMode)
+    {
+      double Ex = -2*dim*Sin(view_roty)*Cos(view_rotx);
+      double Ey = +2*dim        *Sin(view_rotx);
+      double Ez = +2*dim*Cos(view_roty)*Cos(view_rotx);
+      gluLookAt(Ex,Ey,Ez , 0,0,0 , 0,Cos(view_rotx),0);
+    }
+  else
+    {
+      //rotation functions
+      glRotatef(view_rotx, 1.0, 0.0, 0.0);
+      glRotatef(view_roty, 0.0, 1.0, 0.0);
+      glRotatef(view_rotz, 0.0, 0.0, 1.0);
+    }
+  
+  //drawing the torus1
+  glPushMatrix();
+  glTranslatef(-0.8,0.29,0);
+  glColor3f(1,0,0);
+  torus(5, 20);
+  glPopMatrix();
+
+  //drawing the torus2
+  glPushMatrix();
+  glTranslatef(-1.5,0.29,0);
+  glRotatef(90,0,1,0);
+  glScalef(0.5,0.5,0.5);
+  glColor3f(1,0,0);
+  torus(5, 20);
+  glPopMatrix();
+
+  //drawing building1
+  glPushMatrix();
+  glTranslatef(0,0.26,0);
+  glRotatef(-90, 1, 0,0); 
+  drawBuilding();
+  glPopMatrix();
+
+  //drawing building2
+  glPushMatrix();
+  glTranslatef(1,0.14,0);
+  glRotatef(-90, 1, 0,0);
+  glScalef(1,1,0.5);
+  drawBuilding();
+  glPopMatrix();
+
+  //draw the floor
+  drawFloor();
+
+  //toggle the axis display
+  if(draw_axis)
+    drawAxes();
+  
+  //display the text
+  //drawText();
+  
   ErrCheck("display");
 
   glFlush();	
   glutSwapBuffers();	
-
 	
 }
 
 //reshaping the screen and adjusting the coordinates
 static void reshape(int width, int height) {
-  GLfloat h = (GLfloat) height / (GLfloat) width;
+
+
+  aspectRatio = (height>0)?(GLfloat) width / (GLfloat) height : 1;
 
   glViewport(0, 0, (GLint) width, (GLint) height);
-  glMatrixMode(GL_PROJECTION);
+
+  Project(projectionMode);
+  
+  /*glMatrixMode(GL_PROJECTION);
+
   glLoadIdentity();
   //glOrtho - left, right, bottom, top,zNear, zfar)
-  glOrtho(1,1,1,1,-1,1);
-  //glFrustum(-5.0, 5.0, -h*2, h*2, 1.0, 300.0);
+  glOrtho(-h*dim,+h*dim,-dim,+dim,-dim,+dim);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  //glTranslatef(0.0, 0.0, -60.0);
-
+  */
 }
 
 //special characters function
@@ -141,44 +294,37 @@ static void special(int k, int x, int y) {
 
   view_roty = fmod(view_roty, 360);
   view_rotx = fmod(view_rotx, 360);
+  Project(projectionMode);
   glutPostRedisplay();
 }
 
 //special key functions
 static void key(unsigned char k, int x, int y) {
   switch (k) {
-  case 'q':
-    s++;
+    //pressing escape key
+  case 27:
+    exit(0);
     break;
-
-  case 'w':
-    s--;
-    break;
-
-  case 'a':
-    b += 0.1;
-    break;
-
-  case 's':
-    b-= 0.1;
-    break;
-
-  case 'z':
-    r++;
-    break;
-
+  case 'X':
   case 'x':
-    r--;
+    if(draw_axis)
+      draw_axis = false;
+    else
+      draw_axis = true;
     break;
   
-  case 'e':
+  case 'o':
+    projectionMode = 0;
+    
     //glMatrixMode(GL_MODELVIEW);
     //glLoadIdentity();
     //view_posz -= 1;
     //gluLookAt(0,0,view_posz,0.0,0.0,0.0,0.0,1.0,0.0);
     break;
     
-  case 'r':
+  case 'p':
+    projectionMode = 1;
+
     //glMatrixMode(GL_MODELVIEW);
     //glLoadIdentity();
     //view_posz += 1;
@@ -194,7 +340,8 @@ static void key(unsigned char k, int x, int y) {
   default:
     return;
   }
-  
+
+  Project(projectionMode);
   glutPostRedisplay();
 }
 
@@ -210,8 +357,6 @@ int main(int argc,char* argv[]) {
   glutCreateWindow("Assignment 2: Rabin Ranabhat");
 
   //special call backs
-  //enabling the z-buffer depth test
-  glEnable(GL_DEPTH_TEST);
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
   glutSpecialFunc(special);
