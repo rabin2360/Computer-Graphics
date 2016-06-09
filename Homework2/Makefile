@@ -2,10 +2,10 @@ CC = gcc
 
 #flags
 CFLAGS =-O3 -Wall
-GLUTFLGS = -lglut -lGL -lGLU -lGLEW -Wno-write-strings -lm
+GLUTFLGS = -lglut -lGL -lGLU -lm
 
 #target
-TARGET = homework2
+TARGET = hw2
 
 all: $(TARGET)
 
