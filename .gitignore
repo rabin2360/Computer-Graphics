@@ -3,3 +3,5 @@ helloWorld
 !*.cpp
 !Makefile
 !*.txt
+!*/*.cpp
+!*/*.txt
