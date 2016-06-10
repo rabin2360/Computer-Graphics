@@ -2,7 +2,7 @@ CC = gcc
 
 #flags
 CFLAGS =-O3 -Wall
-GLUTFLGS = -lglut -lGL -lGLU -lm
+GLUTFLGS = -lglut -lGL -lGLU -lm -Wno-write-strings
 
 #target
 TARGET = hw2

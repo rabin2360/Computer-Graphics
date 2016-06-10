@@ -25,7 +25,7 @@ static GLfloat view_rotx = 10.0, view_roty = -10.0, view_rotz = 0.0;
 bool draw_axis = true;
 
 //dimension of the world
-double dim = 2.0;
+double dim = 3.0;
 GLfloat h = 1;
 
 //variables for perspective projections
@@ -141,46 +141,253 @@ void drawFloor()
   //drawing the floor
   glColor3f(0.0, 1.0, 0.0);
   glBegin(GL_QUADS);
-  glVertex3f(-1.8,0.0,-1.2);  
-  glVertex3f(1.5,0.0,-1.2);
+
+  glVertex3f(-1.8,0.0,-1.5);  
+  glVertex3f(1.5,0.0,-1.5);
   glVertex3f(1.5,0.0,1.2);
   glVertex3f(-1.8,0.0,1.2);
+  
   glEnd();
   
   glPopMatrix();   
 }
 
 /*void drawText()
-{
+  {
   glPushMatrix();
   glWindowPos2i(5,5);
   Print("Angle=%d,%d",view_rotx,view_roty);
   glPopMatrix();
-}
+  }
 */
 
 //code that draws the torus
 static void torus(int numc, int numt)
 {
-   int i, j, k;
-   double s, t, x, y, z, twopi;
+  int i, j, k;
+  double s, t, x, y, z, twopi;
 
-   twopi = 2 * (double)M_PI;
-   for (i = 0; i < numc; i++) {
-      glBegin(GL_QUAD_STRIP);
-      for (j = 0; j <= numt; j++) {
-         for (k = 1; k >= 0; k--) {
-            s = (i + k) % numc + 0.5;
-            t = j % numt;
+  twopi = 2 * (double)M_PI;
+  for (i = 0; i < numc; i++) {
+    glBegin(GL_QUAD_STRIP);
+    for (j = 0; j <= numt; j++) {
+      for (k = 1; k >= 0; k--) {
+	s = (i + k) % numc + 0.5;
+	t = j % numt;
 
-            x = (0.2+.1*cos(s*twopi/numc))*cos(t*twopi/numt);
-            y = (0.2+.1*cos(s*twopi/numc))*sin(t*twopi/numt);
-            z = .1 * sin(s * twopi / numc);
-            glVertex3f(x, y, z);
-         }
+	x = (0.2+.1*cos(s*twopi/numc))*cos(t*twopi/numt);
+	y = (0.2+.1*cos(s*twopi/numc))*sin(t*twopi/numt);
+	z = .1 * sin(s * twopi / numc);
+	glVertex3f(x, y, z);
       }
-      glEnd();
-   }
+    }
+    glEnd();
+  }
+}
+
+//drawing cone using radius and height parameters
+void drawCone(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
+{
+  glPushMatrix();
+
+  int i = 0;
+
+  glTranslatef(tx, ty, tz);
+  glScalef(sx, sy, sz);
+ 
+  glBegin(GL_TRIANGLES);
+  
+  for(i = 0; i<=360; i+=5)
+    {
+      //glColor3f(1.0,0.0,0.0);
+      glVertex3f(r*Sin(i),0,-r*Cos(i));
+      //glColor3f(0.0,1.0,0.0);
+      glVertex3f(0,h,0);
+      //glColor3f(0.0,0.0,1.0);
+      glVertex3f(r*Sin(i+20),0,-r*Cos(i+20));
+    }
+
+  glEnd();
+  glPopMatrix();
+  
+}
+
+void drawCylinder(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
+{
+  glPushMatrix();
+  
+  glTranslatef(tx,ty,tz);
+  glScalef(sx,sy,sz);
+
+  glBegin(GL_QUADS);
+  int i = 0;
+  for(i = 0; i<=360; i+=5)
+    {
+      //glColor3f(1.0,0.0,0.0);
+      glVertex3f(r*Sin(i),0,-r*Cos(i));
+      //glColor3f(0.0,1.0,0.0);
+      glVertex3f(r*Sin(i),h,-r*Cos(i));
+      //glColor3f(0.0,0.0,1.0);
+      glVertex3f(r*Sin(i+20),h,-r*Cos(i+20));
+      //glColor3f(1.0,1.0,0.0);
+      glVertex3f(r*Sin(i+20),0,-r*Cos(i+20));
+    }
+
+  glEnd();
+  
+  glPopMatrix();
+}
+
+void drawTower(double h, double r)
+{
+  glPushMatrix();
+  //drawing the roof
+  glColor3f(0.18, 0.30, 0.30);
+  drawCone(1.2*h,1*r,
+	   0.0,1.0,0.0,
+	   0.5,1,0.5);
+
+  //underside of the roof
+  glColor3f(0.41, 0.41, 0.41);
+  drawCone(0,1*r,
+	   0.0,1.0,0.0,
+	   0.5,1,0.5);
+
+  //body
+  glColor3f(0.66, 0.66, 0.66);
+  drawCylinder(2*h,0.5*r,
+	       0.0,0.0,0.0,
+	       0.5,1,0.5);
+
+  glPopMatrix();
+}
+
+void drawWall(double h)
+{
+  glPushMatrix();
+  glColor3f(0.86, 0.86, 0.86);
+
+  glBegin(GL_QUADS);
+  glVertex3f(0.0,0.0,0.0);
+  glVertex3f(0.0,h,0.0);
+  glVertex3f(h,h,0.0);
+  glVertex3f(h,0.0,0.0);
+  glEnd();
+  
+  glPopMatrix();
+}
+
+ //draw castle
+void drawCastle()
+{
+   //front tower - left
+  glPushMatrix();
+  glTranslatef(0.5,0.0,0.0);
+  drawTower(0.5, 0.5);
+  glPopMatrix();
+
+  //front tower - right
+  glPushMatrix();
+  glTranslatef(1.3,0.0,0.0);
+  //glScalef(1.3,1.0,1.3);
+  drawTower(0.5, 0.5);
+  glPopMatrix();
+
+  //back tower - left
+  glPushMatrix();
+  glTranslatef(0.5,0.0,-1.1);
+  drawTower(0.5, 0.5);
+  glPopMatrix();
+
+  //back tower - right
+  glPushMatrix();
+  glTranslatef(1.3,0.0,-1.1);
+  //glScalef(1.3,1.0,1.3);
+  drawTower(0.5, 0.5);
+  glPopMatrix();
+
+  //front wall
+  glPushMatrix();
+  glTranslatef(0.4,0.0,0.0);
+  drawWall(1);
+  glPopMatrix();
+
+  //left wall
+  glPushMatrix();
+  glTranslatef(0.4,0.0,-1.0);
+  glRotatef(270,0,1,0);
+  drawWall(1);
+  glPopMatrix();
+
+    //right wall
+  glPushMatrix();
+  glTranslatef(1.3,0.0,0.0);
+  glRotatef(90,0,1,0);
+ 
+  drawWall(1);
+  glPopMatrix();
+
+     //right wall
+  glPushMatrix();
+  glTranslatef(1.4,0.0,-1.1);
+  glRotatef(180,0,1,0);
+  drawWall(1);
+  glPopMatrix();
+
+  //roof
+  glPushMatrix();
+  glTranslatef(0.4,1.0,0.0);
+  glRotatef(-90,1,0,0);
+  glScalef(0.85,1,1);
+  drawWall(1.1);
+  glPopMatrix();
+}
+
+void drawTree(double h, double r)
+{
+  //color of the tree cones
+  glColor3f(0.13,0.54,0.13);
+
+  //drawing a cone-1
+  drawCone(0.9*h,0.6*r,
+	  0.0,0.6,0.0,
+	   0.5,1,0.5);
+
+  //drawing a cone-2
+  drawCone(0.9*h,0.6*r,
+	  0.0,0.8,0.0,
+	   0.5,1,0.5);
+
+
+    //drawing a cone-3
+  drawCone(0.9*h,0.6*r,
+	  0.0,1.0,0.0,
+	   0.5,1,0.5);
+
+  //color for the underside of the trees
+  glColor3f(0.19,0.80,0.19);
+  //base of cone-1
+  drawCone(0,0.6*r,
+	  0.0,0.6,0.0,
+	   0.5,1,0.5);
+
+  //base of cone-2
+  drawCone(0,0.6*r,
+	  0.0,0.8,0.0,
+	   0.5,1,0.5);
+
+  //base of cone-3
+  drawCone(0,0.6*r,
+	  0.0,1.0,0.0,
+	   0.5,1,0.5);
+
+
+  glColor3f(0.54,0.27,0.074);
+  //drawing stalk of the tree
+  drawCylinder(1.6*h,0.2*r,
+	       0.0,0.0,0.0,
+	       0.5,1,0.5);
+ 
 }
 
 //display function
@@ -192,11 +399,19 @@ void display() {
   //loading identity - otherwise, rotate function is very choppy
   glLoadIdentity();
 
-  if(projectionMode)
+  if(projectionMode == 1)
     {
       //this need more work
       gluLookAt(Ex,Ey,Ez ,Ex+Lx,Ly,Ez+Lz, 0,1,0);
     }
+  else if(projectionMode == 2)
+    {
+      Ex = -2*dim*Sin(view_roty)*Cos(view_rotx);
+      Ey = +2*dim        *Sin(view_rotx);
+      Ez = +2*dim*Cos(view_roty)*Cos(view_rotx);
+      gluLookAt(Ex,Ey,Ez ,0,0,0, 0,Cos(view_rotx),0);
+    }
+
   else
     {
       //rotation functions
@@ -204,7 +419,8 @@ void display() {
       glRotatef(view_roty, 0.0, 1.0, 0.0);
       glRotatef(view_rotz, 0.0, 0.0, 1.0);
     }
-  
+
+  /*
   //drawing the torus1
   glPushMatrix();
   glTranslatef(-0.8,0.29,0);
@@ -235,17 +451,70 @@ void display() {
   glScalef(1,1,0.5);
   drawBuilding();
   glPopMatrix();
-
+  */
   //draw the floor
   drawFloor();
+  
+  //draw tree
+  glPushMatrix();
+  glTranslatef(0,0,-1.3);
+  glScalef(0.7,0.8,0.7);
+  drawTree(0.5, 0.9);
+  glPopMatrix();
 
+  //draw tree
+  glPushMatrix();
+  glTranslatef(-0.3,0,-1.3);
+  glScalef(0.7,0.4,0.7);
+  drawTree(0.5, 0.9);
+  glPopMatrix();
+
+  //draw tree
+  glPushMatrix();
+  glTranslatef(-0.7,0,-1.3);
+  glScalef(0.7,0.6,0.7);
+  drawTree(0.5, 0.9);
+  glPopMatrix();
+  
+    //draw tree
+  glPushMatrix();
+  glTranslatef(-1.15,0,-1.3);
+  glScalef(0.7,0.8,0.7);
+  drawTree(0.5, 0.9);
+  glPopMatrix();
+
+
+  //draw tree
+  glPushMatrix();
+  glTranslatef(-0.2,0,-0.9);
+  glScalef(0.7,0.6,0.7);
+  drawTree(0.5, 0.9);
+  glPopMatrix();
+
+    //draw tree
+  glPushMatrix();
+  glTranslatef(-0.5,0,-0.9);
+  glScalef(0.7,0.3,0.7);
+  drawTree(0.7, 0.9);
+  glPopMatrix();
+
+  //draw castle
+  drawCastle();
+
+  glPushMatrix();
+  
+  glTranslatef(-1.3,0.0,1.3);
+  glRotatef(90,0,1,0);
+  glScalef(0.3,0.3,0.3);
+  drawCastle();
+  glPopMatrix();
   //toggle the axis display
   if(draw_axis)
     drawAxes();
   
   //display the text
   //drawText();
-
+  
   ErrCheck("display");
 
   glFlush();	
@@ -262,12 +531,12 @@ static void reshape(int width, int height) {
 
 //special characters function
 static void special(int k, int x, int y) {
-GLfloat stepSize = 0.5;
+  GLfloat stepSize = 0.25;
  
   switch (k) {   
   case GLUT_KEY_UP:
 
-    if(projectionMode)
+    if(projectionMode == 1)
       {
 	Ex += Lx * stepSize;
 	Ez += Lz * stepSize;
@@ -278,7 +547,7 @@ GLfloat stepSize = 0.5;
     break;
     
   case GLUT_KEY_DOWN:
-    if(projectionMode)
+    if(projectionMode == 1)
       {
 	Ex -= Lx * stepSize;
 	Ez -= Lz * stepSize;
@@ -289,18 +558,21 @@ GLfloat stepSize = 0.5;
     break;
     
   case GLUT_KEY_LEFT:
-       if(projectionMode)
+    if(projectionMode == 1)
       {
 	Ex -= 0.1;
 	Lx -= 0.1;
       }
     else
-      view_roty += 5.0;
+      {
+	view_roty += 5.0;
+      }
+
 
     break;
     
   case GLUT_KEY_RIGHT:
-       if(projectionMode)
+    if(projectionMode == 1)
       {
 	Ex += 0.1;
 	Lx += 0.1;
@@ -342,8 +614,8 @@ static void key(unsigned char k, int x, int y) {
     break;
     
   case 'p':
-    projectionMode = 1;
-    angle = 0.0;
+    projectionMode = 2;
+
     //setting my eye position
     Ex = -2*dim*Sin(view_roty)*Cos(view_rotx);
     Ey = +2*dim        *Sin(view_rotx);
@@ -352,7 +624,7 @@ static void key(unsigned char k, int x, int y) {
     //setting the lookAt position
     Lx = -Ex;
     Ly = Ey;
-    Lz = -Ez;
+    Lz = -Ex;
     break;
 
   case 'd':
@@ -363,26 +635,39 @@ static void key(unsigned char k, int x, int y) {
 
   case 'Q':
   case 'q':
-
-    //rotate left - needs work!
-    angle -= 0.09;
+    //rotate left
+    angle -= 0.05;
     Lx = sin(angle);
     Lz = -cos(angle);
     break;
 
   case 'W':
   case 'w':
-    //rotate right - needs work!
-    angle += 0.09;
+    //rotate right
+    angle += 0.05;
     Lx = sin(angle);
-    Lz = -cos(angle);    
+    Lz = -cos(angle);
     break;
-    
+
+  case 'T':
+  case 't':
+    projectionMode = 1;
+    angle = 0;
+    //setting my eye position
+    Ex = -2*dim*Sin(0)*Cos(10);
+    Ey = +2*dim        *Sin(10);
+    Ez = +2*dim*Cos(0)*Cos(10);
+
+    //setting the lookAt position
+    Lx = -(Ex);
+    Ly = Ey;
+    Lz = -(Ez);
+    break;
   default:
     return;
   }
 
-  printf("%f %f %f\n", Lx, Ly, Lz);
+  //printf("%f %f %f\n", Lx, Ly, Lz);
   
   Project(projectionMode);
   glutPostRedisplay();
