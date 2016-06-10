@@ -195,7 +195,7 @@ void display() {
   if(projectionMode)
     {
       //this need more work
-      gluLookAt(Ex,Ey,Ez , Ex+Lx,Ly,Ez+Lz , 0,1,0);
+      gluLookAt(Ex,Ey,Ez ,Ex+Lx,Ly,Ez+Lz, 0,1,0);
     }
   else
     {
@@ -343,7 +343,7 @@ static void key(unsigned char k, int x, int y) {
     
   case 'p':
     projectionMode = 1;
-
+    angle = 0.0;
     //setting my eye position
     Ex = -2*dim*Sin(view_roty)*Cos(view_rotx);
     Ey = +2*dim        *Sin(view_rotx);
@@ -351,7 +351,7 @@ static void key(unsigned char k, int x, int y) {
 
     //setting the lookAt position
     Lx = -Ex;
-    Ly = -Ey;
+    Ly = Ey;
     Lz = -Ez;
     break;
 
@@ -366,18 +366,16 @@ static void key(unsigned char k, int x, int y) {
 
     //rotate left - needs work!
     angle -= 0.09;
-    Lx = 1.5*sin(angle);
-    Ly = 0.1;
-    Lz = -1.5*cos(angle);
+    Lx = sin(angle);
+    Lz = -cos(angle);
     break;
 
   case 'W':
   case 'w':
     //rotate right - needs work!
     angle += 0.09;
-    Lx = 1.5*sin(angle);
-    Ly = 0.1;
-    Lz = -1.5*cos(angle);    
+    Lx = sin(angle);
+    Lz = -cos(angle);    
     break;
     
   default:
