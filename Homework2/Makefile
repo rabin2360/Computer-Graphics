@@ -1,3 +1,4 @@
+#Makefile for c program
 CC = gcc
 
 #flags
