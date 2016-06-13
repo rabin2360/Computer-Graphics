@@ -12,6 +12,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <math.h>
 
 #define GL_GLEXT_PROTOTYPES
@@ -86,28 +87,7 @@ void ErrCheck(char* where)
     fprintf(stderr, "ERROR: %s [%s]\n", gluErrorString(err), where);
 }
 
-//need to change this code. Draw solid cone without glut library
-void drawBuilding()
-{
-  glPushMatrix();
-  glColor3f(1.0,1.0,0.0);
-
-  //body of the house
-  glutSolidCube(0.5);
-  glPopMatrix();
-    
-  //roof
-  glPushMatrix();
-  glColor3f(1.0,1.0,1.0);
-  glTranslatef(0,0,0.2);
- 
-  glutSolidCone(0.5, 0.6, 50, 5);
-  glPopMatrix();
-
-}
-
 //axes for display
-//TODO: gluOffSet function needs to be added
 void drawAxes()
 {
   //drawing the axes
@@ -133,7 +113,6 @@ void drawAxes()
 }
 
 //draw the floor for the display
-//TODO: gluOffSet function needs to be added
 void drawFloor()
 {
   glPushMatrix();
@@ -152,14 +131,23 @@ void drawFloor()
   glPopMatrix();   
 }
 
-/*void drawText()
-  {
+void drawText()
+{
   glPushMatrix();
   glWindowPos2i(5,5);
-  Print("Angle=%d,%d",view_rotx,view_roty);
+
+  if(projectionMode == 1)
+    {
+      Print("Angle=%g, Projection: Traverse",angle);
+    }
+  else
+    {
+      Print("Angle=%g,%g, Projection: %s",view_rotx,view_roty, projectionMode?"Perspective":"Orthographic");
+    }
+
   glPopMatrix();
-  }
-*/
+}
+
 
 
 //drawing cone using radius and height parameters
@@ -251,7 +239,7 @@ void drawWall(double h)
 //draw castle
 void drawCastle()
 {
-   //front tower - left
+  //front tower - left
   glPushMatrix();
   glTranslatef(0.5,0.0,0.0);
   drawTower(0.5, 0.5);
@@ -290,7 +278,7 @@ void drawCastle()
   drawWall(1);
   glPopMatrix();
 
-    //right wall
+  //right wall
   glPushMatrix();
   glTranslatef(1.3,0.0,0.0);
   glRotatef(90,0,1,0);
@@ -298,7 +286,7 @@ void drawCastle()
   drawWall(1);
   glPopMatrix();
 
-     //right wall
+  //right wall
   glPushMatrix();
   glTranslatef(1.4,0.0,-1.1);
   glRotatef(180,0,1,0);
@@ -321,35 +309,35 @@ void drawTree(double h, double r)
 
   //drawing a cone-1
   drawCone(0.9*h,0.6*r,
-	  0.0,0.6,0.0,
+	   0.0,0.6,0.0,
 	   0.5,1,0.5);
 
   //drawing a cone-2
   drawCone(0.9*h,0.6*r,
-	  0.0,0.8,0.0,
+	   0.0,0.8,0.0,
 	   0.5,1,0.5);
 
 
-    //drawing a cone-3
+  //drawing a cone-3
   drawCone(0.9*h,0.6*r,
-	  0.0,1.0,0.0,
+	   0.0,1.0,0.0,
 	   0.5,1,0.5);
 
   //color for the underside of the trees
   glColor3f(0.19,0.80,0.19);
   //base of cone-1
   drawCone(0,0.6*r,
-	  0.0,0.6,0.0,
+	   0.0,0.6,0.0,
 	   0.5,1,0.5);
 
   //base of cone-2
   drawCone(0,0.6*r,
-	  0.0,0.8,0.0,
+	   0.0,0.8,0.0,
 	   0.5,1,0.5);
 
   //base of cone-3
   drawCone(0,0.6*r,
-	  0.0,1.0,0.0,
+	   0.0,1.0,0.0,
 	   0.5,1,0.5);
 
 
@@ -416,7 +404,7 @@ void display() {
   drawTree(0.5, 0.9);
   glPopMatrix();
   
-    //draw tree
+  //draw tree
   glPushMatrix();
   glTranslatef(-1.15,0,-1.3);
   glScalef(0.7,0.8,0.7);
@@ -431,7 +419,7 @@ void display() {
   drawTree(0.5, 0.9);
   glPopMatrix();
 
-    //draw tree
+  //draw tree
   glPushMatrix();
   glTranslatef(-0.5,0,-0.9);
   glScalef(0.7,0.3,0.7);
@@ -448,12 +436,13 @@ void display() {
   glScalef(0.3,0.3,0.3);
   drawCastle();
   glPopMatrix();
+
   //toggle the axis display
   if(draw_axis)
     drawAxes();
   
   //display the text
-  //drawText();
+  drawText();
   
   ErrCheck("display");
 
@@ -475,14 +464,11 @@ static void special(int k, int x, int y) {
  
   switch (k) {   
   case GLUT_KEY_UP:
-
+    //if traverse mode, move forward, else, rotate about X-axis
     if(projectionMode == 1)
       {
 	Ex += Lx * speed;
 	Ez += Lz * speed;
-
-	//Lx += Lx * stepSize;
-	//Lz += Lz * stepSize;
       }
     else
       view_rotx += 5.0;
@@ -490,38 +476,39 @@ static void special(int k, int x, int y) {
     break;
     
   case GLUT_KEY_DOWN:
+    //if traverse mode, move back, else, rotate about X-axis
     if(projectionMode == 1)
       {
 	Ex -= Lx * speed;
 	Ez -= Lz * speed;
-
-	//Lx -= Lx * stepSize;
-	//Lz -= Lz * stepSize;
       }
     else
       view_rotx -= 5.0;
 
     break;
-    //strafe left
+
   case GLUT_KEY_LEFT:
+    //if traverse mode, rotate left, else, rotate about Y-axis
     if(projectionMode == 1)
       {
-	Ex -= 0.1;
-	Lx -= 0.1;
+	//rotate left
+	angle -= 5;
+	Lx = 2*Sin(angle);
+	Lz = -2*Cos(angle);
       }
     else
-      {
-	view_roty += 5.0;
-      }
-
+      view_roty += 5.0;
 
     break;
-    //strafe right
+    
   case GLUT_KEY_RIGHT:
+    //if traverse mode, rotate right, else, rotate about Y-axis
     if(projectionMode == 1)
       {
-	Ex += 0.1;
-	Lx += 0.1;
+	//rotate right
+	angle += 5;
+	Lx = 2*Sin(angle);
+	Lz = -2*Cos(angle);
       }
     else
       view_roty -= 5.0;
@@ -534,7 +521,8 @@ static void special(int k, int x, int y) {
 
   view_roty = fmod(view_roty, 360);
   view_rotx = fmod(view_rotx, 360);
-
+  angle = fmod(angle,360);
+  
   Project(projectionMode);
   glutPostRedisplay();
 }
@@ -554,11 +542,13 @@ static void key(unsigned char k, int x, int y) {
     else
       draw_axis = true;
     break;
-  
+
+  case 'O':
   case 'o':
     projectionMode = 0;
     break;
-    
+
+  case 'P':
   case 'p':
     projectionMode = 2;
 
@@ -573,30 +563,20 @@ static void key(unsigned char k, int x, int y) {
     Lz = -Ex;
     break;
 
-  case 'd':
-    view_rotx = 0;
-    view_roty = 0;
-    view_rotz = 0;
+  case 'R':
+  case 'r':
+    //reset the rotation angles only in either projection or ortho mode but not
+    //in traverse mode
+    if(projectionMode !=1){
+      view_rotx = 0;
+      view_roty = 0;
+      view_rotz = 0;
+    }
     break;
 
-  case 'Q':
-  case 'q':
-    //rotate left
-    angle -= 5;
-    Lx = 2*Sin(angle);
-    Lz = -2*Cos(angle);
-    break;
 
-  case 'W':
-  case 'w':
-    //rotate right
-    angle += 5;
-    Lx = 2*Sin(angle);
-    Lz = -2*Cos(angle);
-    break;
-
-  case 'T':
-  case 't':
+  case 'I':
+  case 'i':
     projectionMode = 1;
     angle = 0;
     
@@ -609,16 +589,11 @@ static void key(unsigned char k, int x, int y) {
     Lx = sin(angle);
     Lz = -cos(angle);
     Ly = Ey;
-    //Lx = -(Ex);
-    //Ly = Ey;
-    //Lz = -(Ez);
     break;
   default:
     return;
   }
 
-  //printf("%f %f %f\n", Lx, Ly, Lz);
-  
   Project(projectionMode);
   glutPostRedisplay();
 }
