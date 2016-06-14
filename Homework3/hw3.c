@@ -1,31 +1,19 @@
 //Name: Rabin Ranabhat
-//Assignment2: 3D scene
-
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+//Assignment3: Lighting and Textures
 
 #ifdef USEGLEW
 #include <GL/glew.h>
 #endif
 
-#include <stdarg.h>
-#include <stdlib.h>
+
 #include <time.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdbool.h>
-#include <math.h>
+
 
 #define GL_GLEXT_PROTOTYPES
 
 #include "CSCI5229.h"
-
-//  Macro for sin & cos in degrees
-//#define Cos(th) cos(3.1415927/180*(th))
-//#define Sin(th) sin(3.1415927/180*(th))
 
 static GLfloat view_rotx = 10.0, view_roty = -10.0, view_rotz = 0.0;
 

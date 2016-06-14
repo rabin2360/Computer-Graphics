@@ -1,4 +1,4 @@
-# Example 13
+#Homework 3
 EXE=hw3
 
 # Main target
