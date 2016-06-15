@@ -24,8 +24,9 @@ extern "C"{
   
 void Print(const char* format, ...);
 void ErrCheck(const char* where);
+unsigned int LoadTexBmp(const char* file);
+void Fatal(const char* format, ...);
 void drawAxes(double axesLen);
-void drawCone(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz);
 void drawCylinder(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz);
 
 #ifdef __cplusplus

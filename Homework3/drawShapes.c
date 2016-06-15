@@ -1,7 +1,7 @@
 #include "CSCI5229.h"
 
 //drawing cone using radius and height parameters
-void drawCone(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
+/*void drawCone(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
 {
   glPushMatrix();
 
@@ -9,7 +9,8 @@ void drawCone(double h, double r, float tx, float ty, float tz, float sx, float 
 
   glTranslatef(tx, ty, tz);
   glScalef(sx, sy, sz);
- 
+
+  //draw the outside of the cone
   glBegin(GL_TRIANGLES);
 
   int inc = 20;
@@ -17,19 +18,37 @@ void drawCone(double h, double r, float tx, float ty, float tz, float sx, float 
   for(i = 0; i<=360; i+=inc)
     {
       glNormal3d(Sin(i),1, -Cos(i));
-      glVertex3f(r*Sin(i),0,-r*Cos(i));
+      glTexCoord2f(r*Sin(i),-r*Cos(i)); glVertex3f(r*Sin(i),0,-r*Cos(i));
 
       glNormal3d(Sin(i+(inc)/2), h, -Cos(i+(inc)/2));
-      glVertex3f(0,h,0);
+      glTexCoord2f(r*Sin(i+(inc)/2),-r*Sin(i+(inc)/2)); glVertex3f(0,h,0);
 
       glNormal3d(Sin(i+inc),1, -Cos(i+inc));
+      glTexCoord2f(r*Sin(i+(inc)),-r*Sin(i+(inc))); glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
+    }
+
+  glEnd();
+
+  glDisable(GL_TEXTURE_2D);
+
+  //draw the base of the cone
+  glBegin(GL_TRIANGLE_STRIP);
+  for(i = 0; i<=360; i+=inc)
+    {
+      glNormal3d(0,-1, 0);
+      
+      glVertex3f(r*Sin(i),0,-r*Cos(i));
+
+      glVertex3f(0,0,0);
+
+
       glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
     }
 
   glEnd();
   glPopMatrix();
   
-}
+  }*/
 
 void drawCylinder(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
 {

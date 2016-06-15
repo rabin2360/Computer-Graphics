@@ -1,5 +1,4 @@
-//Name: Rabin Ranabhat
-//Assignment3: Lighting and Textures
+//Name: Rabin Ranabhat Assignment3: Lighting and Textures
 
 #ifdef USEGLEW
 #include <GL/glew.h>
@@ -40,15 +39,15 @@ int light = 0;
 //light azimuth
 int zh = 90;
 //ambient light in percentage
-int ambient = 30;
+int ambient = 50;
 //diffuse light in percentage
 int diffuse = 100;
 //specular light in percentage
 int specular = 0;
 //distance of light
-int distance = 3;
+float distance = 3.0;
 //elevation of light
-int ylight = 0;
+float ylight = 0.0;
 //shininess value
 float shinyvec[1];
 //emission intensity
@@ -60,6 +59,10 @@ int local = 0;
 
 //pause variable that controls the auto rotation of the light
 int pause = 0;
+
+//variables for texture
+unsigned int texture[3];  //texture names
+int textureMode = 0;
 
 void Project(int mode)
 {
@@ -76,23 +79,88 @@ void Project(int mode)
   glLoadIdentity();
 
 }
+//drawing cone using radius and height parameters
+void drawCone(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
+{
+  glPushMatrix();
+
+  int i;
+
+  glTranslatef(tx, ty, tz);
+  glScalef(sx, sy, sz);
+
+  
+  //enable texture
+      glEnable(GL_TEXTURE_2D);
+      glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
+      glBindTexture(GL_TEXTURE_2D,texture[2]);
+
+
+  //draw the outside of the cone
+  glBegin(GL_TRIANGLES);
+
+  int inc = 20;
+  
+  for(i = 0; i<=360; i+=inc)
+    {
+      glNormal3d(Sin(i),1, -Cos(i));
+      glTexCoord2f(0,0); glVertex3f(r*Sin(i),0,-r*Cos(i));
+
+      glNormal3d(Sin(i+(inc)/2), h, -Cos(i+(inc)/2));
+      glTexCoord2f(0.5,0.5); glVertex3f(0,h,0);
+
+      glNormal3d(Sin(i+inc),1, -Cos(i+inc));
+      glTexCoord2f(1,0); glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
+    }
+
+  glEnd();
+
+  glDisable(GL_TEXTURE_2D);
+
+  //draw the base of the cone
+  glBegin(GL_TRIANGLE_STRIP);
+  for(i = 0; i<=360; i+=inc)
+    {
+      glNormal3d(0,-1, 0);
+      
+      glVertex3f(r*Sin(i),0,-r*Cos(i));
+
+      glVertex3f(0,0,0);
+
+
+      glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
+    }
+
+  glEnd();
+  glPopMatrix();
+  
+}
 
 //draw the floor for the display
 void drawFloor()
 {
   glPushMatrix();
 
+  //enable texture
+      glEnable(GL_TEXTURE_2D);
+      glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
+      glBindTexture(GL_TEXTURE_2D,texture[1]);
+
+
   //drawing the floor
   glColor3f(0.0, 1.0, 0.0);
   glBegin(GL_QUADS);
+  glNormal3f(0,1,0);
 
-  glVertex3f(-1.8,0.0,-1.5);  
-  glVertex3f(1.5,0.0,-1.5);
-  glVertex3f(1.5,0.0,1.2);
-  glVertex3f(-1.8,0.0,1.2);
+  glTexCoord2f(0,0); glVertex3f(-1.8,0.0,-1.5);  
+  glTexCoord2f(1,0); glVertex3f(1.5,0.0,-1.5);
+  glTexCoord2f(1,1); glVertex3f(1.5,0.0,1.2);
+  glTexCoord2f(0,1); glVertex3f(-1.8,0.0,1.2);
   
   glEnd();
-  
+
+  glDisable(GL_TEXTURE_2D);
+   
   glPopMatrix();   
 }
 
@@ -103,12 +171,16 @@ void drawText()
 
   if(projectionMode == 1)
     {
-      Print("Angle=%g, Projection: Traverse",angle);
+      Print("Angle=%g, Projection: Traverse, Light: %s",angle, light ? "On": "Off");
+      Print("Ambient=%d, Specular=%d, Diffuse=%d",ambient, specular, diffuse);
     }
   else
     {
-      Print("Angle=%g,%g, Projection: %s",view_rotx,view_roty, projectionMode?"Perspective":"Orthographic");
+      Print("Angle=%g,%g, Projection: %s, Light: %s\n",view_rotx,view_roty, projectionMode?"Perspective":"Orthographic", light ? "On": "Off");
     }
+
+  glWindowPos2i(5,25);
+  Print("Ambient=%d, Specular=%d, Diffuse=%d",ambient, specular, diffuse);
 
   glPopMatrix();
 }
@@ -118,14 +190,8 @@ void drawTower(double h, double r)
   glPushMatrix();
 
   //drawing the roof
-  glColor3f(0.18, 0.30, 0.30);
+  glColor3f(0.15, 0.15, 0.15);
   drawCone(1.2*h,1*r,
-	   0.0,1.0,0.0,
-	   0.5,1,0.5);
-
-  //underside of the roof
-  glColor3f(0.41, 0.41, 0.41);
-  drawCone(0,1*r,
 	   0.0,1.0,0.0,
 	   0.5,1,0.5);
 
@@ -141,18 +207,23 @@ void drawTower(double h, double r)
 void drawWall(double h)
 {
   glPushMatrix();
+
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
+  glBindTexture(GL_TEXTURE_2D,texture[0]);
+
   glColor3f(0.86, 0.86, 0.86);
 
   glBegin(GL_QUADS);
-  glNormal3d(0,0,1);
-  glVertex3f(0.0,0.0,0.0);
   
-  glVertex3f(0.0,h,0.0);
-
-  glVertex3f(h,h,0.0);
-  glVertex3f(h,0.0,0.0);
+  glNormal3f(0,0,1);
+  glTexCoord2f(0,0); glVertex3f(0.0,0.0,0.0);
+  glTexCoord2f(0,1);   glVertex3f(0.0,h,0.0);
+  glTexCoord2f(1,1);   glVertex3f(h,h,0.0);
+  glTexCoord2f(1,0);   glVertex3f(h,0.0,0.0);
   glEnd();
-  
+
+  glDisable(GL_TEXTURE_2D);
   glPopMatrix();
 }
 
@@ -185,6 +256,7 @@ void drawCastle()
   drawTower(0.5, 0.5);
   glPopMatrix();
 
+  
   //front wall
   glPushMatrix();
   glTranslatef(0.4,0.0,0.0);
@@ -202,7 +274,6 @@ void drawCastle()
   glPushMatrix();
   glTranslatef(1.3,0.0,0.0);
   glRotatef(90,0,1,0);
- 
   drawWall(1);
   glPopMatrix();
 
@@ -220,6 +291,7 @@ void drawCastle()
   glScalef(0.85,1,1);
   drawWall(1.1);
   glPopMatrix();
+  
 }
 
 void drawTree(double h, double r)
@@ -243,24 +315,6 @@ void drawTree(double h, double r)
 	   0.0,1.0,0.0,
 	   0.5,1,0.5);
 
-  //color for the underside of the trees
-  glColor3f(0.19,0.80,0.19);
-  //base of cone-1
-  drawCone(0,0.6*r,
-	   0.0,0.6,0.0,
-	   0.5,1,0.5);
-
-  //base of cone-2
-  drawCone(0,0.6*r,
-	   0.0,0.8,0.0,
-	   0.5,1,0.5);
-
-  //base of cone-3
-  drawCone(0,0.6*r,
-	   0.0,1.0,0.0,
-	   0.5,1,0.5);
-
-
   glColor3f(0.54,0.27,0.074);
   //drawing stalk of the tree
   drawCylinder(1.6*h,0.2*r,
@@ -273,7 +327,7 @@ void drawScene()
 {
   //draw the floor
   drawFloor();
-  
+
   //draw tree
   glPushMatrix();
   glTranslatef(0,0,-1.3);
@@ -350,14 +404,17 @@ static void ball(double x,double y,double z,double r)
   float Emission[]  = {0.0,0.0,0.01*emission,1.0};
   //  Save transformation
   glPushMatrix();
+
   //  Offset, scale and rotate
   glTranslated(x,y,z);
   glScaled(r,r,r);
+
   //  White ball
   glColor3f(1,1,1);
   glMaterialfv(GL_FRONT,GL_SHININESS,shinyvec);
   glMaterialfv(GL_FRONT,GL_SPECULAR,yellow);
   glMaterialfv(GL_FRONT,GL_EMISSION,Emission);
+  
   //  Bands of latitude
   for (ph=-90;ph<90;ph+=inc)
     {
@@ -407,8 +464,8 @@ void display() {
       glRotatef(view_rotz, 0.0, 0.0, 1.0);
     }
 
+  
   //determine light
-  light = 1;
   if(light)
     {
       //  Translate intensity to color vectors
@@ -469,12 +526,16 @@ void display() {
 
 static void idle()
 {
+   //  Elapsed time in seconds
+   //double t = glutGet(GLUT_ELAPSED_TIME)/1000.0;
+   //zh = fmod(90*t,360.0);
+  
   //if not paused, then only increment the ball rotation degree
-  if(!pause)
+  if(!pause && light)
     {
-      zh +=1.5;
-      zh = fmod(zh, 360.0);
-  }
+      zh +=1;
+      zh %= 360;
+    }
   
   glutPostRedisplay();
 }
@@ -562,7 +623,37 @@ static void key(unsigned char k, int x, int y) {
   case 27:
     exit(0);
     break;
-    
+
+  case 'a':
+    if (light && ambient <100)
+ 	ambient += 1;
+    break;
+
+  case 'A':
+    if(light && ambient >0)
+	ambient -= 1;
+    break;
+
+   case 's':
+    if (light && specular <100)
+      specular += 1;
+    break;
+
+  case 'S':
+    if(light && specular >0)
+      specular -= 1;
+    break;
+
+  case 'd':
+    if (light && diffuse <100)
+      diffuse += 1;
+    break;
+
+  case 'D':
+    if(light && diffuse >=0)
+      diffuse -= 1;
+    break;
+   
   case 'X':
   case 'x':
     if(draw_axis)
@@ -619,14 +710,74 @@ static void key(unsigned char k, int x, int y) {
     Ly = Ey;
     break;
 
+  case 'q':
+    if(!pause)
+      pause = 1;
+    
+    zh += 1.5;
+    break;
+    
+  case 'Q':
+    if(!pause)
+      pause = 1;
+    
+    zh -= 1.5;
+    break;
+
+  case 'w':
+    if(!pause)
+      pause = 1;
+    
+    ylight += 0.1;
+    break;
+    
+  case 'W':
+    if(!pause)
+      pause = 1;
+    
+    ylight -= 0.1;
+    break;
+
+   case 'e':
+    if(!pause)
+      pause = 1;
+    
+    distance += 0.1;
+    break;
+    
+  case 'E':
+    if(!pause)
+      pause = 1;
+    
+    distance -= 0.1;
+    break;
+    
+  case 'l':
+    light = 1;
+    break;
+  case 'L':
+    light = 0;
+    break;
+
+  case 't':
+    textureMode = 1;
+    break;
+  case 'T':
+    textureMode = 0;
+    break;
+    
   case 'z':
   case 'Z':
     if(pause)
+      {
       pause = 0;
+      distance = 3.0;
+      }
     else
       pause = 1;
     
     break;
+    
   default:
     return;
   }
@@ -644,7 +795,7 @@ int main(int argc,char* argv[]) {
   glutInitWindowPosition(50, 50);
   glutInitWindowSize(600, 600);
   //Window title
-  glutCreateWindow("Assignment 2: Rabin Ranabhat");
+  glutCreateWindow("Assignment 3: Rabin Ranabhat");
 
   //special call backs
   glutDisplayFunc(display);
@@ -652,7 +803,12 @@ int main(int argc,char* argv[]) {
   glutSpecialFunc(special);
   glutKeyboardFunc(key);
   glutIdleFunc(idle);
-	
+
+  //load texture
+   texture[0] = LoadTexBMP("stoneWall.bmp");
+   texture[1] = LoadTexBMP("newGrass.bmp");
+   texture[2] = LoadTexBMP("castleRoof.bmp");
+   ErrCheck("init");
   glutMainLoop();
 	
   return 0;
