@@ -28,12 +28,11 @@ hw3.o: hw3.c CSCI5229.h
 print.o: print.c CSCI5229.h
 errorMsg.o: errorMsg.c CSCI5229.h
 drawAxes.o: drawAxes.c CSCI5229.h
-drawShapes.o: drawShapes.c CSCI5229.h
 loadtexbmp.o: loadtexbmp.c CSCI5229.h
 fatal.o: fatal.c CSCI5229.h
 
 #  Create archive
-CSCI5229.a:print.o errorMsg.o drawAxes.o drawShapes.o loadtexbmp.o fatal.o
+CSCI5229.a:print.o errorMsg.o drawAxes.o loadtexbmp.o fatal.o
 	ar -rcs $@ $^
 
 # Compile rules
