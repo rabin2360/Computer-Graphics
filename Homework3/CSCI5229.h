@@ -24,7 +24,7 @@ extern "C"{
   
 void Print(const char* format, ...);
 void ErrCheck(const char* where);
-unsigned int LoadTexBmp(const char* file);
+unsigned int LoadTexBMP(const char* file);
 void Fatal(const char* format, ...);
 void drawAxes(double axesLen);
 

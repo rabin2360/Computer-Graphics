@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-
 #define GL_GLEXT_PROTOTYPES
 
 #include "CSCI5229.h"
@@ -19,7 +18,7 @@ static GLfloat view_rotx = 10.0, view_roty = -10.0, view_rotz = 0.0;
 bool draw_axis = true;
 
 //dimension of the world
-double dim = 3.5;
+double dim = 3;
 GLfloat h = 1;
 
 //variables for perspective projections
@@ -39,15 +38,15 @@ int light = 0;
 //light azimuth
 int zh = 90;
 //ambient light in percentage
-int ambient = 50;
+int ambient = 45;
 //diffuse light in percentage
 int diffuse = 100;
 //specular light in percentage
-int specular = 0;
+int specular = 10;
 //distance of light
 float distance = 3.0;
 //elevation of light
-float ylight = 0.0;
+float ylight = 1.0;
 //shininess value
 float shinyvec[1];
 //emission intensity
@@ -61,8 +60,7 @@ int local = 0;
 int pause = 0;
 
 //variables for texture
-unsigned int texture[3];  //texture names
-int textureMode = 0;
+unsigned int texture[5];  //texture names
 
 void Project(int mode)
 {
@@ -79,8 +77,65 @@ void Project(int mode)
   glLoadIdentity();
 
 }
+
+void drawCylinder(double h, double r,
+		  float tx, float ty, float tz,
+		  float sx, float sy, float sz,
+		  int texType)
+{
+  glPushMatrix();
+  
+  glTranslatef(tx,ty,tz);
+  glScalef(sx,sy,sz);
+
+  
+  //enable texture
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
+
+  //texType 1 - tree bark
+  //else - castle
+  if(texType)
+    glBindTexture(GL_TEXTURE_2D,texture[0]);
+  else
+    glBindTexture(GL_TEXTURE_2D,texture[3]);
+    
+  glBegin(GL_QUADS);
+  int i;
+  int inc = 40;
+
+  double texMap = 0.0;
+  
+  for(i = 0; i<=360; i+=inc)
+    {
+      glNormal3d(Sin(i),1, -Cos(i));
+      glTexCoord2d(texMap,0); glVertex3f(r*Sin(i),0,-r*Cos(i));
+
+      glNormal3d(Sin(i),h, -Cos(i));
+      glTexCoord2d(texMap,0.8); glVertex3f(r*Sin(i),h,-r*Cos(i));
+
+      glNormal3d(Sin(i+inc),h, -Cos(i+inc));
+      glTexCoord2d(texMap+0.1,0.8); glVertex3f(r*Sin(i+inc),h,-r*Cos(i+inc));
+
+      glNormal3d(Sin(i+inc),1, -Cos(i+inc));
+      glTexCoord2d(texMap+0.1,0); glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
+
+      texMap += 0.1;//1.0/(360/inc);
+      
+    }
+
+  glEnd();
+
+  glDisable(GL_TEXTURE_2D);
+
+  glPopMatrix();
+}
+
 //drawing cone using radius and height parameters
-void drawCone(double h, double r, float tx, float ty, float tz, float sx, float sy, float sz)
+void drawCone(double h, double r,
+	      float tx, float ty, float tz,
+	      float sx, float sy, float sz,
+	      int texMode)
 {
   glPushMatrix();
 
@@ -91,26 +146,32 @@ void drawCone(double h, double r, float tx, float ty, float tz, float sx, float 
 
   
   //enable texture
-      glEnable(GL_TEXTURE_2D);
-      glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
-      glBindTexture(GL_TEXTURE_2D,texture[2]);
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
 
-
+  //if texMode is 1, draw the castle roof
+  //otherwise, draw the tree texture
+  if(texMode)
+    glBindTexture(GL_TEXTURE_2D,texture[2]);
+  else
+    glBindTexture(GL_TEXTURE_2D,texture[4]);
+ 
   //draw the outside of the cone
   glBegin(GL_TRIANGLES);
 
   int inc = 20;
+  double texVal = 0;
   
   for(i = 0; i<=360; i+=inc)
     {
       glNormal3d(Sin(i),1, -Cos(i));
-      glTexCoord2f(0,0); glVertex3f(r*Sin(i),0,-r*Cos(i));
+      glTexCoord2f(texVal, 0); glVertex3f(r*Sin(i),0,-r*Cos(i));
 
       glNormal3d(Sin(i+(inc)/2), h, -Cos(i+(inc)/2));
-      glTexCoord2f(0.5,0.5); glVertex3f(0,h,0);
+      glTexCoord2f(texVal+0.1,1); glVertex3f(0,h,0);
 
       glNormal3d(Sin(i+inc),1, -Cos(i+inc));
-      glTexCoord2f(1,0); glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
+      glTexCoord2f(texVal+0.2, 0); glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
     }
 
   glEnd();
@@ -124,10 +185,7 @@ void drawCone(double h, double r, float tx, float ty, float tz, float sx, float 
       glNormal3d(0,-1, 0);
       
       glVertex3f(r*Sin(i),0,-r*Cos(i));
-
       glVertex3f(0,0,0);
-
-
       glVertex3f(r*Sin(i+inc),0,-r*Cos(i+inc));
     }
 
@@ -142,9 +200,9 @@ void drawFloor()
   glPushMatrix();
 
   //enable texture
-      glEnable(GL_TEXTURE_2D);
-      glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
-      glBindTexture(GL_TEXTURE_2D,texture[1]);
+  glEnable(GL_TEXTURE_2D);
+  glTexEnvi(GL_TEXTURE_ENV , GL_TEXTURE_ENV_MODE , GL_MODULATE);
+  glBindTexture(GL_TEXTURE_2D,texture[1]);
 
 
   //drawing the floor
@@ -152,11 +210,28 @@ void drawFloor()
   glBegin(GL_QUADS);
   glNormal3f(0,1,0);
 
+  /*  float xValStart = -1.8;
+  float xValEnd = 1.5;
+  float yValStart = -1.5;
+  float yValEnd = 1.2;
+  */
+  float xVal, zVal;
+  
+  for(zVal = -1.5; zVal<=1.2; zVal += 0.1)
+        for(xVal = -1.8; xVal<=1.5; xVal+=0.1)
+      {
+	glTexCoord2f(0,0); glVertex3f(xVal,0.0,zVal);  
+	glTexCoord2f(1,0); glVertex3f(xVal+0.1,0.0,zVal);
+	glTexCoord2f(1,1); glVertex3f(xVal+0.1,0.0,zVal+0.1);
+	glTexCoord2f(0,1); glVertex3f(xVal,0.0,zVal+0.1);
+
+      }
+  /*
   glTexCoord2f(0,0); glVertex3f(-1.8,0.0,-1.5);  
   glTexCoord2f(1,0); glVertex3f(1.5,0.0,-1.5);
   glTexCoord2f(1,1); glVertex3f(1.5,0.0,1.2);
   glTexCoord2f(0,1); glVertex3f(-1.8,0.0,1.2);
-  
+  */
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
@@ -193,13 +268,15 @@ void drawTower(double h, double r)
   glColor3f(0.15, 0.15, 0.15);
   drawCone(1.2*h,1*r,
 	   0.0,1.0,0.0,
-	   0.5,1,0.5);
+	   0.5,1,0.5,
+	   1);
 
   //body
   glColor3f(0.66, 0.66, 0.66);
   drawCylinder(2*h,0.5*r,
 	       0.0,0.0,0.0,
-	       0.5,1,0.5);
+	       0.5,1,0.5,
+	       1);
 
   glPopMatrix();
 }
@@ -215,9 +292,28 @@ void drawWall(double h)
   glColor3f(0.86, 0.86, 0.86);
 
   glBegin(GL_QUADS);
-  
   glNormal3f(0,0,1);
-  glTexCoord2f(0,0); glVertex3f(0.0,0.0,0.0);
+
+  /*double yValues;
+  double xValues;
+  double texVals = 0;
+  double texValt = 0;
+  
+  for(yValues = 0; yValues<=h; yValues+= 0.1){
+    for(xValues = 0; xValues<=h; xValues+=0.1)
+      {
+	glTexCoord2f(texVals,texValt);   glVertex3f(xValues,yValues,0.0);
+	glTexCoord2f(texVals,texValt+0.1);   glVertex3f(xValues,yValues+0.1,0.0);
+	glTexCoord2f(texVals+0.1,texValt+0.1);   glVertex3f(xValues+0.1,yValues+0.1,0.0);
+	glTexCoord2f(texVals+0.1,texValt);   glVertex3f(xValues+0.1,yValues,0.0);
+
+	texVals += 0.1;
+      }
+    texValt +=0.1;
+  }
+  */
+  
+  glTexCoord2f(0,0);   glVertex3f(0.0,0.0,0.0);
   glTexCoord2f(0,1);   glVertex3f(0.0,h,0.0);
   glTexCoord2f(1,1);   glVertex3f(h,h,0.0);
   glTexCoord2f(1,0);   glVertex3f(h,0.0,0.0);
@@ -302,24 +398,28 @@ void drawTree(double h, double r)
   //drawing a cone-1
   drawCone(0.9*h,0.6*r,
 	   0.0,0.6,0.0,
-	   0.5,1,0.5);
+	   0.5,1,0.5,
+	   0);
 
   //drawing a cone-2
   drawCone(0.9*h,0.6*r,
 	   0.0,0.8,0.0,
-	   0.5,1,0.5);
+	   0.5,1,0.5,
+	   0);
 
 
   //drawing a cone-3
   drawCone(0.9*h,0.6*r,
 	   0.0,1.0,0.0,
-	   0.5,1,0.5);
+	   0.5,1,0.5,
+	   0);
 
   glColor3f(0.54,0.27,0.074);
   //drawing stalk of the tree
   drawCylinder(1.6*h,0.2*r,
 	       0.0,0.0,0.0,
-	       0.5,1,0.5);
+	       0.5,1,0.5,
+	       0);
  
 }
 
@@ -526,9 +626,6 @@ void display() {
 
 static void idle()
 {
-   //  Elapsed time in seconds
-   //double t = glutGet(GLUT_ELAPSED_TIME)/1000.0;
-   //zh = fmod(90*t,360.0);
   
   //if not paused, then only increment the ball rotation degree
   if(!pause && light)
@@ -626,15 +723,15 @@ static void key(unsigned char k, int x, int y) {
 
   case 'a':
     if (light && ambient <100)
- 	ambient += 1;
+      ambient += 1;
     break;
 
   case 'A':
     if(light && ambient >0)
-	ambient -= 1;
+      ambient -= 1;
     break;
 
-   case 's':
+  case 's':
     if (light && specular <100)
       specular += 1;
     break;
@@ -711,45 +808,62 @@ static void key(unsigned char k, int x, int y) {
     break;
 
   case 'q':
-    if(!pause)
-      pause = 1;
+    //if the light is turned on
+    //then pause the light and move is clockwise by 1.5
+    if(light)
+      {
+	if(!pause)
+	  pause = 1;
     
-    zh += 1.5;
+	zh += 1.5;
+      }
     break;
     
   case 'Q':
+
+    if(light)
+      {
     if(!pause)
       pause = 1;
     
     zh -= 1.5;
+    }
     break;
 
   case 'w':
+    if(light){
     if(!pause)
       pause = 1;
     
     ylight += 0.1;
+    }
     break;
     
   case 'W':
+    if(light){
     if(!pause)
       pause = 1;
     
     ylight -= 0.1;
+    }
     break;
 
-   case 'e':
+  case 'e':
+    if(light){
     if(!pause)
       pause = 1;
     
     distance += 0.1;
+    }
     break;
     
   case 'E':
+    if(light){
     if(!pause)
       pause = 1;
     
     distance -= 0.1;
+    }
     break;
     
   case 'l':
@@ -759,19 +873,12 @@ static void key(unsigned char k, int x, int y) {
     light = 0;
     break;
 
-  case 't':
-    textureMode = 1;
-    break;
-  case 'T':
-    textureMode = 0;
-    break;
-    
   case 'z':
   case 'Z':
     if(pause)
       {
-      pause = 0;
-      distance = 3.0;
+	pause = 0;
+	distance = 3.0;
       }
     else
       pause = 1;
@@ -805,10 +912,13 @@ int main(int argc,char* argv[]) {
   glutIdleFunc(idle);
 
   //load texture
-   texture[0] = LoadTexBMP("stoneWall.bmp");
-   texture[1] = LoadTexBMP("newGrass.bmp");
-   texture[2] = LoadTexBMP("castleRoof.bmp");
-   ErrCheck("init");
+  texture[0] = LoadTexBMP("stoneWall.bmp");
+  texture[1] = LoadTexBMP("grass.bmp");
+  texture[2] = LoadTexBMP("castleRoof.bmp");
+  texture[3] = LoadTexBMP("treeBark.bmp");
+  texture[4] = LoadTexBMP("tree.bmp");
+  
+  ErrCheck("init");
   glutMainLoop();
 	
   return 0;
