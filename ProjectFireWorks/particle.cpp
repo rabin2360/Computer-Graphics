@@ -5,13 +5,13 @@ Particle::Particle(Sphere *s) {
   //location
   location.x = s->center.location.x + 2*(myRandom() - 0.5);//*s->radius;
   location.y = s->center.location.y + 2*(myRandom() - 0.5);//*s->radius;
-  location.z = 0;//s->center.location.z + 2*(myRandom() - 0.5);//*s->radius;
+  location.z = s->center.location.z + 2*(myRandom() - 0.5);//*s->radius;
 
   //speed
   speed.x = (myRandom() - 0.5)*5;
   speed.y = (myRandom() - 0.5)*5;
-  speed.z = 0;
-  //speed.z = (myRandom() - 0.5)*5;
+  //speed.z = 0;
+  speed.z = (myRandom() - 0.5)*5;
 
   //setting accelaration
   set(&acceleration, 0, 0-GRAVITY_POWER, 0);

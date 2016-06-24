@@ -10,7 +10,7 @@ Sphere::Sphere() {
   //speed of the ball
   center.speed.x = (myRandom() - 0.5)*5;
   center.speed.y = (myRandom() + 0.5)*10;
-  center.speed.z = 0;//(myRandom() - 0.5)*5;
+  center.speed.z = (myRandom() - 0.5)*5;
 
   //setting the acceleration for the ball
   set(&center.acceleration, 0, 0-GRAVITY_POWER, 0);
@@ -29,9 +29,10 @@ Sphere::Sphere() {
 }
 
 void Sphere::move() {
-  add(&center.speed, &center.acceleration);
+  center.move();
+  //add(&center.speed, &center.acceleration);
 
-  add(&center.location, &center.speed);
+  //add(&center.location, &center.speed);
 }
 
 list<Particle *> Sphere::explode() {

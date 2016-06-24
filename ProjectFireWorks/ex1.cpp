@@ -31,11 +31,11 @@ int light = 0;
 //light azimuth
 int zh = 90;
 //ambient light in percentage
-int ambient = 45;
+int ambient = 20;
 //diffuse light in percentage
 int diffuse = 100;
 //specular light in percentage
-int specular = 10;
+int specular = 100;
 //dist of light
 float dist = 380.0;
 //elevation of light
@@ -43,7 +43,7 @@ float ylight = 0.0;
 //shininess value
 float shinyvec[1];
 //emission intensity
-int emission = 0;
+int emission = 30;
 //ball increment
 int inc = 10;
 //local viewer model
@@ -53,16 +53,25 @@ int angle = 0;
 
 //camera position
 double Lx = -0.174311;
-double Ly = 1;//500.0;
+double Ly = 50;//500.0;
 double Lz = -1.992389;
 
 double Ex = 1;
-double Ey = 0;//100;
-double Ez = 800;//1000;
+double Ey = 50;//100;
+double Ez = 600;//1000;
 
 //skybox variables
 int skyTex[2];
 int dim = 100;
+
+//object variables
+int objBarrel;
+
+//terrain
+float z[65][65];       //  DEM data
+float zmin=+1e8;       //  DEM lowest location
+float zmax=-1e8;       //  DEM highest location
+float zmag=0.6;          //  DEM magnification
 
   int countVal = 0;
 ///////////////////////////////////////////////
@@ -79,6 +88,25 @@ void initData(void) {
 }
 
 ///////////////////////////////////////////////
+
+/*
+ *  Read DEM from file
+ */
+void ReadDEM(char* file)
+{
+   int i,j;
+   FILE* f = fopen(file,"r");
+   if (!f) Fatal("Cannot open file %s\n",file);
+   for (j=0;j<=64;j++)
+      for (i=0;i<=64;i++)
+      {
+         if (fscanf(f,"%f",&z[i][j])!=1) Fatal("Error reading saddleback.dem\n");
+         if (z[i][j] < zmin) zmin = z[i][j];
+         if (z[i][j] > zmax) zmax = z[i][j];
+      }
+   fclose(f);
+}
+
 
 void animate(void)
 {
@@ -183,23 +211,23 @@ void skyBox(double D)
    glBindTexture(GL_TEXTURE_2D,skyTex[0]);
 
    glBegin(GL_QUADS);
-   glTexCoord2f(0.00,0); glVertex3f(-D,-0.01*D,-D);
-   glTexCoord2f(0.25,0); glVertex3f(+D,-0.01*D,-D);
+   glTexCoord2f(0.00,0); glVertex3f(-D,-0.1*D,-D);
+   glTexCoord2f(0.25,0); glVertex3f(+D,-0.1*D,-D);
    glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
    glTexCoord2f(0.00,1); glVertex3f(-D,+D,-D);
 
-   glTexCoord2f(0.25,0); glVertex3f(+D,-0.01*D,-D);
-   glTexCoord2f(0.50,0); glVertex3f(+D,-0.01*D,+D);
+   glTexCoord2f(0.25,0); glVertex3f(+D,-0.1*D,-D);
+   glTexCoord2f(0.50,0); glVertex3f(+D,-0.1*D,+D);
    glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
    glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
 
-   glTexCoord2f(0.50,0); glVertex3f(+D,-0.01*D,+D);
-   glTexCoord2f(0.75,0); glVertex3f(-D,-0.01*D,+D);
+   glTexCoord2f(0.50,0); glVertex3f(+D,-0.1*D,+D);
+   glTexCoord2f(0.75,0); glVertex3f(-D,-0.1*D,+D);
    glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
    glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
 
-   glTexCoord2f(0.75,0); glVertex3f(-D,-0.01*D,+D);
-   glTexCoord2f(1.00,0); glVertex3f(-D,-0.01*D,-D);
+   glTexCoord2f(0.75,0); glVertex3f(-D,-0.1*D,+D);
+   glTexCoord2f(1.00,0); glVertex3f(-D,-0.1*D,-D);
    glTexCoord2f(1.00,1); glVertex3f(-D,+D,-D);
    glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
    glEnd();
@@ -211,12 +239,31 @@ void skyBox(double D)
    glTexCoord2f(0.5,0); glVertex3f(+D,+D,+D);
    glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
    glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
-
-   glTexCoord2f(1.0,1); glVertex3f(-D,-0.01*D,+D);
-   glTexCoord2f(0.5,1); glVertex3f(+D,-0.01*D,+D);
-   glTexCoord2f(0.5,0); glVertex3f(+D,-0.01*D,-D);
-   glTexCoord2f(1.0,0); glVertex3f(-D,-0.01*D,-D);
    glEnd();
+   
+     int i,j;
+   double z0 = (zmin+zmax)/2;
+   //glColor3f(1,1,0);
+   for (i=0;i<64;i++)
+         for (j=0;j<64;j++)
+         {
+	  
+            float x=32*i-1024;
+            float y=32*j-1024;
+	    glNormal3d(0,1,0);
+            glBegin(GL_QUADS);
+	    glTexCoord2f((i+0)/64.,(j+0)/64.); glVertex3d(x+ 0,zmag*(z[i+0][j+0]-z0),y+ 0);
+            glTexCoord2f((i+1)/64.,(j+0)/64.); glVertex3d(x+32,zmag*(z[i+1][j+0]-z0),y+ 0);
+            glTexCoord2f((i+1)/64.,(j+1)/64.); glVertex3d(x+32,zmag*(z[i+1][j+1]-z0),y+32);
+            glTexCoord2f((i+0)/64.,(j+1)/64.); glVertex3d(x+ 0,zmag*(z[i+0][j+1]-z0),y+32);
+            glEnd();
+	 }
+   
+   //glTexCoord2f(1.0,1); glVertex3f(-D,-0.01*D,+D);
+   //glTexCoord2f(0.5,1); glVertex3f(+D,-0.01*D,+D);
+   //glTexCoord2f(0.5,0); glVertex3f(+D,-0.01*D,-D);
+   //glTexCoord2f(1.0,0); glVertex3f(-D,-0.01*D,-D);
+   //glEnd();
 
    glDisable(GL_TEXTURE_2D);
 
@@ -234,12 +281,19 @@ void display()
   //glMatrixMode(GL_MODELVIEW);
   
   glLoadIdentity();
+
   gluLookAt(Ex, Ey, Ez,
             Ex+Lx, Ly, Ez+Lz,
             0.0, 1.0, 0.0);
 
-  skyBox(10*dim);
+  skyBox(8*dim);
   drawAxes(60);
+
+  glPushMatrix();
+  //glScalef(50,50,50);
+  //glColor3f(1,1,0);
+  glCallList(objBarrel);
+  glPopMatrix();
   
   //determine light
   if(light)
@@ -253,6 +307,10 @@ void display()
       float Position[]  = {dist*Cos(zh),ylight,dist*Sin(zh),1.0};
       //color for the rotating light
       glColor3f(1,1,1);
+      Position[0] = 0;
+      Position[1] = 380;
+      Position[2] = 0;
+      
       ball(Position[0],Position[1],Position[2],15);
 
       //keeps the normal vector unit length
@@ -291,19 +349,26 @@ void display()
     	double alpha = 0;
 	
 	//for each particle, reference the prevLocations
-	/*for(auto sphereIterator =  ((*it)->center).prevLocations.begin(); sphereIterator !=  ((*it)->center).prevLocations.end(); sphereIterator++)
+	glLineWidth(POINT_LINE_SIZE);
+	glBegin(GL_LINE_STRIP);
+	for(auto sphereIterator =  ((*it)->center).prevLocations.begin(); sphereIterator !=  ((*it)->center).prevLocations.end(); sphereIterator++)
 	  {
-	    glTranslatef((*sphereIterator).x, (*sphereIterator).y, (*sphereIterator).z);
-	    glColor4f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z, alpha);
-	    glutSolidSphere((*it)->radius, 18, 18);
-	    alpha += 0.1;
-	    }*/
-        //glVertex3f((*it)->location.x, (*it)->location.y, (*it)->location.z);
-        //glVertex3f((*it)->previousLocation.x, (*it)->previousLocation.y, (*it)->previousLocation.z);
+	    glColor4f(1, 1, 0, alpha);
+	    //glColor4f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z, alpha);
+	    glVertex3f((*sphereIterator).x, (*sphereIterator).y,(*sphereIterator).z);
 
-    glTranslatef(((*it)->center).location.x, ((*it)->center).location.y, ((*it)->center).location.z);
-    glColor3f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z);
-    glutSolidSphere(4/*(*it)->radius*/, 18, 18);
+	    
+	    alpha += 0.15;
+	    }
+
+	glEnd();
+
+	glTranslatef(((*it)->center).location.x, ((*it)->center).location.y, ((*it)->center).location.z);
+	glutSolidSphere(1, 18, 18);
+	
+    //glColor3f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z);
+    //glColor3f(1.0, 1.0, 0);
+    //glutSolidSphere(2/*(*it)->radius*/, 18, 18);
     
     glPopMatrix();
   }
@@ -312,6 +377,7 @@ void display()
   case RENDERING_TRAIL:
     glLineWidth(POINT_LINE_SIZE);
 
+    
       for(auto it = particles.begin(); it != particles.end(); it++) {
         
 	double alpha = 0;
@@ -322,7 +388,7 @@ void display()
 	  {
 	    glColor4f((*it)->color.x, (*it)->color.y, (*it)->color.z, alpha);
 	    glVertex3f( (*particleIterator).x,(*particleIterator).y, (*particleIterator).z);
-	    
+
 	    alpha += 0.1;
 	  }
         //glVertex3f((*it)->location.x, (*it)->location.y, (*it)->location.z);
@@ -374,43 +440,44 @@ void keyboard(unsigned char key, int x, int y)
 
 //special characters function
 static void special(int k, int x, int y) {
-  GLfloat speed = 0.25;
+  GLfloat speed = 1.2;
  
   switch (k) {   
   case GLUT_KEY_UP:
-    if(Ly < 3)
- 	Ly += 0.1;
+    
+    Ex += Lx * speed;
+    Ez += Lz * speed;
      break;
     
   case GLUT_KEY_DOWN:
-    if(Ly > -3)
-        Ly -= 0.1;
+    Ex -= Lx * speed;
+    Ez -= Lz * speed;
     break;
 
   case GLUT_KEY_LEFT:
     	//rotate left
-    if(angle>-40){
+    // if(angle>-40){
 	angle -= 5;
 	Lx = 2*Sin(angle);
 	Lz = -2*Cos(angle);
-    }
+	//}
 	break;
 
   case GLUT_KEY_RIGHT:
     	//rotate right
-    if(angle<40){
+    // if(angle<40){
 	angle += 5;
 	Lx = 2*Sin(angle);
 	Lz = -2*Cos(angle);
-    }
+	// }
 	break;
 
   case GLUT_KEY_PAGE_DOWN:
-    Ez -= 10;
+    Ly += 0.1;
     break;
 
   case GLUT_KEY_PAGE_UP:
-    Ez += 10;
+    Ly -= 0.1;
     break;
   
   default:
@@ -418,7 +485,7 @@ static void special(int k, int x, int y) {
     
   }
 
-  printf("Lx %f, Ly%f, Lz %f, angle %d\n", Lx,Ly,Lz, angle);
+  //printf("Lx %f, Ly%f, Lz %f, angle %d\n", Ex,Ey,Ez, angle);
   glutPostRedisplay();
 }
 ////////////////////////////////////////////////////
@@ -457,6 +524,8 @@ void change_particle_ttl(int value) {
 void change_rendering_type(int value) {
   renderingType = value;
 }
+
+
 
 ///////////////////////////////////////////////
 void initGraphics(int argc, char *argv[])
@@ -531,6 +600,10 @@ void initGraphics(int argc, char *argv[])
   //loading textures for the sky box with mipmap
   skyTex[0] = LoadTexBMP("sky0.bmp",1);
   skyTex[1] = LoadTexBMP("sky1.bmp",1);
+
+  objBarrel = LoadOBJ("Tree.obj");
+  ReadDEM("saddleback.dem");
+
   ErrCheck("init");
 }
 

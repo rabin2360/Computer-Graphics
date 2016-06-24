@@ -24,10 +24,10 @@ extern "C"{
   
 void Print(const char* format, ...);
 void ErrCheck(const char* where);
-  unsigned int LoadTexBMP(const char* file, int mode);
+unsigned int LoadTexBMP(const char* file, int mode);
 void Fatal(const char* format, ...);
 void drawAxes(double axesLen);
-
+int LoadOBJ(const char* file);
 
 #ifdef __cplusplus
 }
