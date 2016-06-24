@@ -65,7 +65,7 @@ int skyTex[2];
 int dim = 100;
 
 //object variables
-int objBarrel;
+int objTree;
 
 //terrain
 float z[65][65];       //  DEM data
@@ -232,7 +232,7 @@ void skyBox(double D)
    glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
    glEnd();
 
-      //  Top and bottom
+      //  Top
    glBindTexture(GL_TEXTURE_2D,skyTex[1]);
    glBegin(GL_QUADS);
    glTexCoord2f(0.0,0); glVertex3f(+D,+D,-D);
@@ -240,7 +240,8 @@ void skyBox(double D)
    glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
    glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
    glEnd();
-   
+
+   //Bottom
      int i,j;
    double z0 = (zmin+zmax)/2;
    //glColor3f(1,1,0);
@@ -269,32 +270,80 @@ void skyBox(double D)
 
 }
 
+void drawWater(int radius)
+{
+  glPushMatrix();
+  glColor4f(0,0,1,0.6);
+  glBegin(GL_TRIANGLE_STRIP);
+
+  for(double i = 0; i< 2*M_PI; i+= M_PI/6)
+    {
+      glVertex3f(cos(i)*radius, 0, sin(i)*radius);
+      glVertex3f(0,0,0);
+      glVertex3f(cos(i+(M_PI/6))*radius, 0, sin(i+(M_PI/6))*radius);
+    }
+
+  glEnd();
+
+  glPopMatrix();
+}
+
 void display()
 {
    
   // Clear the screen
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  //glAccum(GL_RETURN, 0.95);
-  //glClear(GL_ACCUM_BUFFER_BIT);
-  //glMatrixMode(GL_MODELVIEW);
-  
   glLoadIdentity();
 
-  gluLookAt(Ex, Ey, Ez,
-            Ex+Lx, Ly, Ez+Lz,
-            0.0, 1.0, 0.0);
+  gluLookAt(Ex, Ey, Ez,Ex+Lx, Ly, Ez+Lz,0.0, 1.0, 0.0);
 
   skyBox(8*dim);
   drawAxes(60);
 
   glPushMatrix();
-  //glScalef(50,50,50);
-  //glColor3f(1,1,0);
-  glCallList(objBarrel);
+  glCallList(objTree);
   glPopMatrix();
+
   
+  
+  //glDisable(GL_DEPTH_TEST);
+  //glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+  glEnable(GL_STENCIL_TEST);
+  
+  glStencilFunc(GL_ALWAYS, 1, 0xFF);
+  glStencilOp(GL_REPLACE,GL_REPLACE, GL_REPLACE);
+  glStencilMask(0xFF);
+  glDepthMask(GL_FALSE);
+  glClear(GL_STENCIL_BUFFER_BIT);
+  
+  //draw the water
+  drawWater(200);
+
+  
+  //glColorMask(1,1,1,1);
+  //glEnable(GL_DEPTH_TEST);
+  
+  glStencilFunc(GL_EQUAL, 1, 0xFF);
+  glStencilMask(0x00);
+  glDepthMask(GL_TRUE);
+  //glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
+
+  glPushMatrix();
+  glScalef(1,-1,1);
+  glCallList(objTree);
+  glPopMatrix();
+
+  glDisable(GL_STENCIL_TEST);
+
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glColor4f(0,0,1,0.7);
+  drawWater(100);
+  glDisable(GL_BLEND);
+
   //determine light
   if(light)
     {
@@ -409,7 +458,6 @@ void display()
   }
 
   glFlush();
-  //glAccum(GL_ACCUM, 0.90); 
   glutSwapBuffers(); 
   
   ErrCheck("display");
@@ -431,6 +479,19 @@ void keyboard(unsigned char key, int x, int y)
 	light = 0;
       else
 	light = 1;
+    }
+
+  if(key == 'q')
+    {
+      Ey -= 0.1;
+      Ly -= 0.1;
+    }
+
+  
+  if(key == 'Q')
+    {
+      Ey += 0.1;
+      Ly += 0.1;
     }
   
   glutPostRedisplay();
@@ -601,7 +662,7 @@ void initGraphics(int argc, char *argv[])
   skyTex[0] = LoadTexBMP("sky0.bmp",1);
   skyTex[1] = LoadTexBMP("sky1.bmp",1);
 
-  objBarrel = LoadOBJ("Tree.obj");
+  objTree = LoadOBJ("Tree.obj");
   ReadDEM("saddleback.dem");
 
   ErrCheck("init");

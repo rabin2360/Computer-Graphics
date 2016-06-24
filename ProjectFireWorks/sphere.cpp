@@ -9,7 +9,7 @@ Sphere::Sphere() {
 
   //speed of the ball
   center.speed.x = (myRandom() - 0.5)*5;
-  center.speed.y = (myRandom() + 0.5)*10;
+  center.speed.y = (myRandom() + 0.5)*7;
   center.speed.z = (myRandom() - 0.5)*5;
 
   //setting the acceleration for the ball
