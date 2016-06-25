@@ -66,6 +66,7 @@ int dim = 100;
 
 //object variables
 int objTree;
+int objPineTree;
 
 //terrain
 float z[65][65];       //  DEM data
@@ -273,14 +274,14 @@ void skyBox(double D)
 void drawWater(int radius)
 {
   glPushMatrix();
-  glColor4f(0,0,1,0.6);
+  glColor4f(0.39,0.58,0.92,0.7);
   glBegin(GL_TRIANGLE_STRIP);
 
   for(double i = 0; i< 2*M_PI; i+= M_PI/6)
     {
-      glVertex3f(cos(i)*radius, 0, sin(i)*radius);
-      glVertex3f(0,0,0);
-      glVertex3f(cos(i+(M_PI/6))*radius, 0, sin(i+(M_PI/6))*radius);
+      glVertex3f(cos(i)*radius, -0.01, sin(i)*radius);
+      glVertex3f(0,-0.01,0);
+      glVertex3f(cos(i+(M_PI/6))*radius, -0.01, sin(i+(M_PI/6))*radius);
     }
 
   glEnd();
@@ -302,7 +303,10 @@ void display()
   skyBox(8*dim);
   drawAxes(60);
 
+  //glCallList(objPineTree);
+  
   glPushMatrix();
+  glTranslatef(0,0,-100);
   glCallList(objTree);
   glPopMatrix();
 
@@ -319,9 +323,8 @@ void display()
   glClear(GL_STENCIL_BUFFER_BIT);
   
   //draw the water
-  drawWater(200);
+  drawWater(100);
 
-  
   //glColorMask(1,1,1,1);
   //glEnable(GL_DEPTH_TEST);
   
@@ -331,18 +334,18 @@ void display()
   //glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
 
   glPushMatrix();
+  glTranslatef(0,0,-100);
   glScalef(1,-1,1);
   glCallList(objTree);
   glPopMatrix();
 
   glDisable(GL_STENCIL_TEST);
 
-
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4f(0,0,1,0.7);
-  drawWater(100);
-  glDisable(GL_BLEND);
+  
+  //drawWater(100);
+  //glDisable(GL_BLEND);
 
   //determine light
   if(light)
@@ -457,6 +460,7 @@ void display()
     glEnd();
   }
 
+  glDisable(GL_BLEND);
   glFlush();
   glutSwapBuffers(); 
   
@@ -483,15 +487,15 @@ void keyboard(unsigned char key, int x, int y)
 
   if(key == 'q')
     {
-      Ey -= 0.1;
-      Ly -= 0.1;
+      Ey -= 1;
+      Ly -= 1;
     }
 
   
   if(key == 'Q')
     {
-      Ey += 0.1;
-      Ly += 0.1;
+      Ey += 1;
+      Ly += 1;
     }
   
   glutPostRedisplay();
@@ -663,6 +667,8 @@ void initGraphics(int argc, char *argv[])
   skyTex[1] = LoadTexBMP("sky1.bmp",1);
 
   objTree = LoadOBJ("Tree.obj");
+  objPineTree = LoadOBJ("PineTree.obj");
+  
   ReadDEM("saddleback.dem");
 
   ErrCheck("init");
