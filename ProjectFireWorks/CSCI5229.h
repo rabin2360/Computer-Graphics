@@ -29,6 +29,9 @@ void Fatal(const char* format, ...);
 void drawAxes(double axesLen);
 int LoadOBJ(const char* file);
 
+void InitNoise (void);
+float Noise (const float, const float, const float, const float);
+
 #ifdef __cplusplus
 }
 #endif

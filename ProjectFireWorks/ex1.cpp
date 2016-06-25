@@ -66,7 +66,6 @@ int dim = 100;
 
 //object variables
 int objTree;
-int objPineTree;
 
 //terrain
 float z[65][65];       //  DEM data
@@ -75,6 +74,25 @@ float zmax=-1e8;       //  DEM highest location
 float zmag=0.6;          //  DEM magnification
 
   int countVal = 0;
+
+//water variables
+int waterTex;
+#define RESOLUTION 30 //water ripples rate
+static float surface[6 * RESOLUTION * (RESOLUTION + 1)];
+static float normal[6 * RESOLUTION * (RESOLUTION + 1)];
+
+
+///////////////////////////////////////////////
+static float	zVal (const float x, const float y, const float t)
+{
+  const float x2 = x - 3;
+  const float y2 = y + 1;
+  const float xx = x2 * x2;
+  const float yy = y2 * y2;
+  return ((2 * sinf (20 * sqrtf (xx + yy) - 4 * t) +
+	   Noise (10 * x, 10 * y, t, 0)) / 200);
+}
+
 ///////////////////////////////////////////////
 
 void initData(void) {
@@ -203,6 +221,17 @@ static void ball(double x,double y,double z,double r)
   glPopMatrix();
 }
 
+void drawTopSkyBox(double D)
+{
+   glBegin(GL_QUADS);
+   glTexCoord2f(0.0,0); glVertex3f(+D,+D,-D);
+   glTexCoord2f(0.5,0); glVertex3f(+D,+D,+D);
+   glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
+   glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
+   glEnd();
+
+}
+
 void skyBox(double D)
 {
   glColor3f(1,1,1);
@@ -233,14 +262,9 @@ void skyBox(double D)
    glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
    glEnd();
 
-      //  Top
+   //  Top
    glBindTexture(GL_TEXTURE_2D,skyTex[1]);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0.0,0); glVertex3f(+D,+D,-D);
-   glTexCoord2f(0.5,0); glVertex3f(+D,+D,+D);
-   glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
-   glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
-   glEnd();
+   drawTopSkyBox(D);
 
    //Bottom
      int i,j;
@@ -274,7 +298,7 @@ void skyBox(double D)
 void drawWater(int radius)
 {
   glPushMatrix();
-  glColor4f(0.39,0.58,0.92,0.7);
+  glColor4f(0.39,0.58,0.92,0.5);
   glBegin(GL_TRIANGLE_STRIP);
 
   for(double i = 0; i< 2*M_PI; i+= M_PI/6)
@@ -289,21 +313,232 @@ void drawWater(int radius)
   glPopMatrix();
 }
 
+void drawWaterRipples(int sx, int sy, int sz,int tx, int ty, int tz)
+{
+  glPushMatrix();
+  
+   const float t = glutGet (GLUT_ELAPSED_TIME) / 1000.;
+  const float delta = 2. / RESOLUTION;
+  const unsigned int length = 2 * (RESOLUTION + 1);
+  const float xn = (RESOLUTION + 1) * delta + 1;
+  unsigned int i;
+  unsigned int j;
+  float x;
+  float y;
+  unsigned int indice;
+  unsigned int preindice;
+
+  /* Yes, I know, this is quite ugly... */
+  float v1x;
+  float v1y;
+  float v1z;
+
+  float v2x;
+  float v2y;
+  float v2z;
+
+  float v3x;
+  float v3y;
+  float v3z;
+
+  float vax;
+  float vay;
+  float vaz;
+
+  float vbx;
+  float vby;
+  float vbz;
+
+  float nx;
+  float ny;
+  float nz;
+
+  float l;
+
+    glTranslatef (tx, ty, tz);
+    glScalef(sx,sy,sz);
+  //glRotatef (rotate_y, 1, 0, 0);
+  //glRotatef (rotate_x, 0, 1, 0);
+
+  /* Vertices */
+  for (j = 0; j < RESOLUTION; j++)
+    {
+      y = (j + 1) * delta - 1;
+      for (i = 0; i <= RESOLUTION; i++)
+	{
+	  indice = 6 * (i + j * (RESOLUTION + 1));
+
+	  x = i * delta - 1;
+	  surface[indice + 3] = x;
+	  surface[indice + 4] = zVal (x, y, t);
+	  surface[indice + 5] = y;
+	  if (j != 0)
+	    {
+	      /* Values were computed during the previous loop */
+	      preindice = 6 * (i + (j - 1) * (RESOLUTION + 1));
+	      surface[indice] = surface[preindice + 3];
+	      surface[indice + 1] = surface[preindice + 4];
+	      surface[indice + 2] = surface[preindice + 5];
+	    }
+	  else
+	    {
+	      surface[indice] = x;
+	      surface[indice + 1] = zVal(x, -1, t);
+	      surface[indice + 2] = -1;
+	    }
+	}
+    }
+
+  /* Normals */
+  for (j = 0; j < RESOLUTION; j++)
+    for (i = 0; i <= RESOLUTION; i++)
+      {
+	indice = 6 * (i + j * (RESOLUTION + 1));
+
+	v1x = surface[indice + 3];
+	v1y = surface[indice + 4];
+	v1z = surface[indice + 5];
+
+	v2x = v1x;
+	v2y = surface[indice + 1];
+	v2z = surface[indice + 2];
+
+	if (i < RESOLUTION)
+	  {
+	    v3x = surface[indice + 9];
+	    v3y = surface[indice + 10];
+	    v3z = v1z;
+	  }
+	else
+	  {
+	    v3x = xn;
+	    v3y = zVal(xn, v1z, t);
+	    v3z = v1z;
+	  }
+
+	vax =  v2x - v1x;
+	vay =  v2y - v1y;
+	vaz =  v2z - v1z;
+
+	vbx = v3x - v1x;
+	vby = v3y - v1y;
+	vbz = v3z - v1z;
+
+	nx = (vby * vaz) - (vbz * vay);
+	ny = (vbz * vax) - (vbx * vaz);
+	nz = (vbx * vay) - (vby * vax);
+
+	l = sqrtf (nx * nx + ny * ny + nz * nz);
+	if (l != 0)
+	  {
+	    l = 1 / l;
+	    normal[indice + 3] = nx * l;
+	    normal[indice + 4] = ny * l;
+	    normal[indice + 5] = nz * l;
+	  }
+	else
+	  {
+	    normal[indice + 3] = 0;
+	    normal[indice + 4] = 1;
+	    normal[indice + 5] = 0;
+	  }
+
+
+	if (j != 0)
+	  {
+	    /* Values were computed during the previous loop */
+	    preindice = 6 * (i + (j - 1) * (RESOLUTION + 1));
+	    normal[indice] = normal[preindice + 3];
+	    normal[indice + 1] = normal[preindice + 4];
+	    normal[indice + 2] = normal[preindice + 5];
+	  }
+	else
+	  {
+/* 	    v1x = v1x; */
+	    v1y = zVal(v1x, (j - 1) * delta - 1, t);
+	    v1z = (j - 1) * delta - 1;
+
+/* 	    v3x = v3x; */
+	    v3y = zVal(v3x, v2z, t);
+	    v3z = v2z;
+
+	    vax = v1x - v2x;
+	    vay = v1y - v2y;
+	    vaz = v1z - v2z;
+
+	    vbx = v3x - v2x;
+	    vby = v3y - v2y;
+	    vbz = v3z - v2z;
+
+	    nx = (vby * vaz) - (vbz * vay);
+	    ny = (vbz * vax) - (vbx * vaz);
+	    nz = (vbx * vay) - (vby * vax);
+
+	    l = sqrtf (nx * nx + ny * ny + nz * nz);
+	    if (l != 0)
+	      {
+		l = 1 / l;
+		normal[indice] = nx * l;
+		normal[indice + 1] = ny * l;
+		normal[indice + 2] = nz * l;
+	      }
+	    else
+	      {
+		normal[indice] = 0;
+		normal[indice + 1] = 1;
+		normal[indice + 2] = 0;
+	      }
+	  }
+      }
+
+
+  /* Render wireframe? */
+  //glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+
+  /* The water */
+  //GLfloat texVertices [] = {0,0,1,0,0.5,0.5};
+  // glEnable (GL_TEXTURE_2D);
+
+   glColor4f(0.39,0.58,0.92,0.5);
+ 
+   //glEnableClientState (GL_NORMAL_ARRAY);
+  glEnableClientState (GL_VERTEX_ARRAY);
+  //glEnableClientState (GL_TEXTURE_COORD_ARRAY_EXT);
+
+  //glBindTexture(GL_TEXTURE_2D, waterTex);
+  //glNormalPointer (GL_FLOAT, 0, normal);
+  glVertexPointer (3, GL_FLOAT, 0, surface);
+  //glTexCoordPointer(1, GL_FLOAT, 0, texVertices);
+  
+  for (i = 0; i < RESOLUTION; i++)
+    {
+      glDrawArrays (GL_TRIANGLE_STRIP, i * length, length);
+    }
+  
+  //glDisable(GL_TEXTURE_2D);
+  
+  ErrCheck("water");
+  glPopMatrix();
+ }
+
 void display()
 {
    
   // Clear the screen
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+ 
   glLoadIdentity();
 
   gluLookAt(Ex, Ey, Ez,Ex+Lx, Ly, Ez+Lz,0.0, 1.0, 0.0);
 
+  glPushMatrix();
   skyBox(8*dim);
-  drawAxes(60);
+  glPopMatrix();
 
-  //glCallList(objPineTree);
+  //drawWaterRipples();
+  
+   //glCallList(objPineTree);
   
   glPushMatrix();
   glTranslatef(0,0,-100);
@@ -311,6 +546,10 @@ void display()
   glPopMatrix();
 
   
+  glPushMatrix();
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
   //glDisable(GL_DEPTH_TEST);
   //glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
@@ -323,28 +562,32 @@ void display()
   glClear(GL_STENCIL_BUFFER_BIT);
   
   //draw the water
-  drawWater(100);
-
+  glPushAttrib(GL_DEPTH_BUFFER_BIT);
+  //glEnable(GL_DEPTH_TEST);
+  // drawWater(100);
+  //int sx, int sy, int sz,int tx, int ty, int tz
+    drawWaterRipples(300,300,300,0,1,0);
+  //glEnable(GL_DEPTH_TEST);
+  glPopAttrib();
   //glColorMask(1,1,1,1);
   //glEnable(GL_DEPTH_TEST);
   
   glStencilFunc(GL_EQUAL, 1, 0xFF);
   glStencilMask(0x00);
   glDepthMask(GL_TRUE);
-  //glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
+  glStencilOp(GL_KEEP,GL_KEEP, GL_KEEP);
 
   glPushMatrix();
   glTranslatef(0,0,-100);
-  glScalef(1,-1,1);
+  glScalef(0.8,-1,4);
   glCallList(objTree);
   glPopMatrix();
 
   glDisable(GL_STENCIL_TEST);
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+ 
+  glPopMatrix();
   
-  //drawWater(100);
+  //drawWater(200);
   //glDisable(GL_BLEND);
 
   //determine light
@@ -420,7 +663,7 @@ void display()
 	
     //glColor3f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z);
     //glColor3f(1.0, 1.0, 0);
-    //glutSolidSphere(2/*(*it)->radius*/, 18, 18);
+    //glutSolidSphere(2, 18, 18);
     
     glPopMatrix();
   }
@@ -459,8 +702,10 @@ void display()
       }
     glEnd();
   }
-
+  
+  
   glDisable(GL_BLEND);
+  //drawAxes(60);
   glFlush();
   glutSwapBuffers(); 
   
@@ -487,15 +732,15 @@ void keyboard(unsigned char key, int x, int y)
 
   if(key == 'q')
     {
-      Ey -= 1;
-      Ly -= 1;
+      Ey -= 3;
+      Ly -= 3;
     }
 
   
   if(key == 'Q')
     {
-      Ey += 1;
-      Ly += 1;
+      Ey += 3;
+      Ly += 3;
     }
   
   glutPostRedisplay();
@@ -505,7 +750,7 @@ void keyboard(unsigned char key, int x, int y)
 
 //special characters function
 static void special(int k, int x, int y) {
-  GLfloat speed = 1.2;
+  GLfloat speed = 2.5;
  
   switch (k) {   
   case GLUT_KEY_UP:
@@ -596,6 +841,8 @@ void change_rendering_type(int value) {
 void initGraphics(int argc, char *argv[])
 {
   initData();
+  InitNoise ();
+  
   glutInit(&argc, argv);
   glutInitWindowSize(800, 600);
   glutInitWindowPosition(100, 100);
@@ -609,11 +856,13 @@ void initGraphics(int argc, char *argv[])
   glutReshapeFunc(reshape);
   glutIdleFunc(animate);
 
-  glShadeModel(GL_SMOOTH);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClearAccum(0.0f, 0.0f, 0.0f, 1.0f);
-  
+  //glShadeModel(GL_SMOOTH);
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glClearAccum(0.0f, 0.0f, 0.0f, 1.0f);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
   auto sphere_rate_submenu = glutCreateMenu(change_sphere_rate);
     glutAddMenuEntry("Very few", 1);
     glutAddMenuEntry("Few", 2);
@@ -666,8 +915,9 @@ void initGraphics(int argc, char *argv[])
   skyTex[0] = LoadTexBMP("sky0.bmp",1);
   skyTex[1] = LoadTexBMP("sky1.bmp",1);
 
+  waterTex = LoadTexBMP("reflection.bmp",1);
+  
   objTree = LoadOBJ("Tree.obj");
-  objPineTree = LoadOBJ("PineTree.obj");
   
   ReadDEM("saddleback.dem");
 

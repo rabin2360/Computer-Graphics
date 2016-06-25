@@ -34,9 +34,10 @@ errorMsg.o: errorMsg.c CSCI5229.h
 drawAxes.o: drawAxes.c CSCI5229.h
 print.o: print.c CSCI5229.h
 object.o: object.c CSCI5229.h
+noise.o: noise.c CSCI5229.h
 
 #  Create archive
-CSCIx229.a:utils.o sphere.o particle.o loadtexbmp.o fatal.o errorMsg.o drawAxes.o print.o object.o
+CSCIx229.a:utils.o sphere.o particle.o loadtexbmp.o fatal.o errorMsg.o drawAxes.o print.o object.o noise.o
 	ar -rcs $@ $^
 
 # Compile rules
