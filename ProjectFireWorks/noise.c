@@ -26,8 +26,6 @@
 */
 #include "CSCI5229.h"
 
-#include <stdlib.h>
-
 #define		MOD	0xff
 
 static int		permut[256];

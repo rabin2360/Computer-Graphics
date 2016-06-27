@@ -1,4 +1,4 @@
-#include "ex1.h"
+#include "final.h"
 
 const float defaultRadius = 10;
 const float XRange = 1000;

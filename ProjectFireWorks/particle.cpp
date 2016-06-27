@@ -1,4 +1,4 @@
-#include "ex1.h"
+#include "final.h"
 
 Particle::Particle(Sphere *s) {
 
@@ -8,13 +8,13 @@ Particle::Particle(Sphere *s) {
   location.z = s->center.location.z + 2*(myRandom() - 0.5);//*s->radius;
 
   //speed
-  speed.x = (myRandom() - 0.5)*5;
-  speed.y = (myRandom() - 0.5)*5;
+  speed.x = (myRandom() - 0.5)*10;
+  speed.y = (myRandom() - 0.5)*10;
   //speed.z = 0;
-  speed.z = (myRandom() - 0.5)*5;
+  speed.z = (myRandom() - 0.5)*10;
 
   //setting accelaration
-  set(&acceleration, 0, 0-GRAVITY_POWER, 0);
+  set(&acceleration, 0, 0-GRAVITY_POWER*0.5, 0);
 
   //setting color
   set(&color, s->center.color.x, s->center.color.y, s->center.color.z);
