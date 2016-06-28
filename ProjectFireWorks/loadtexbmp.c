@@ -84,6 +84,7 @@ unsigned int LoadTexBMP(const char* file, int mode)
   //  Sanity check
   ErrCheck("LoadTexBMP");
   //  Generate 2D texture
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glGenTextures(1,&texture);
   glBindTexture(GL_TEXTURE_2D,texture);
   //  Copy image
@@ -96,12 +97,16 @@ unsigned int LoadTexBMP(const char* file, int mode)
 		      image);
   else
     glTexImage2D(GL_TEXTURE_2D,0,3,dx,dy,0,GL_RGB,GL_UNSIGNED_BYTE,image);
+  
   if (glGetError()) Fatal("Error in glTexImage2D %s %dx%d\n",file,dx,dy);
+
+  
   //  Scale linearly when image size doesn't match
   if(mode)
     {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+      glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     }
   else
     {

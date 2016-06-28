@@ -8,10 +8,9 @@ Particle::Particle(Sphere *s) {
   location.z = s->center.location.z + 2*(myRandom() - 0.5);//*s->radius;
 
   //speed
-  speed.x = (myRandom() - 0.5)*10;
-  speed.y = (myRandom() - 0.5)*10;
-  //speed.z = 0;
-  speed.z = (myRandom() - 0.5)*10;
+  speed.x = (myRandom() - 0.5)*8;
+  speed.y = (myRandom() - 0.5)*8;
+  speed.z = (myRandom() - 0.5)*8;
 
   //setting accelaration
   set(&acceleration, 0, 0-GRAVITY_POWER*0.5, 0);

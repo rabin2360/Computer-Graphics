@@ -29,7 +29,7 @@ int renderingType = 0;
 
 
 //lightning in openGL
-int light = 0;
+int light = 1;
 //light azimuth
 int zh = 90;
 //ambient light in percentage
@@ -63,7 +63,7 @@ double Ey = 50;//100;
 double Ez = 600;//1000;
 
 //skybox variables
-int skyTex[2];
+int skyTex[6];
 int dim = 100;
 
 //object variables
@@ -78,6 +78,7 @@ float zmag=0.6;          //  DEM magnification
 
 //water variables
 int waterTex;
+int waterTexture = 1;
 
 //pool variables
 int marbleTex;
@@ -208,46 +209,64 @@ static void ball(double x,double y,double z,double r)
 void drawTopSkyBox(double D)
 {
   glBegin(GL_QUADS);
-  glTexCoord2f(0.0,0); glVertex3f(+D,+D,-D);
-  glTexCoord2f(0.5,0); glVertex3f(+D,+D,+D);
-  glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
-  glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
+  glTexCoord2f(0,0); glVertex3f(+D,+D,-D);
+  glTexCoord2f(1,0); glVertex3f(+D,+D,+D);
+  glTexCoord2f(1,1); glVertex3f(-D,+D,+D);
+  glTexCoord2f(0,1); glVertex3f(-D,+D,-D);
   glEnd();
 
 }
 
 void skyBox(double D)
 {
+  //left,right,front,back,up and down
   glColor3f(1,1,1);
   glEnable(GL_TEXTURE_2D);
 
   //  Sides
-  glBindTexture(GL_TEXTURE_2D,skyTex[0]);
+  glBindTexture(GL_TEXTURE_2D,skyTex[2]);
 
+  //front
   glBegin(GL_QUADS);
-  glTexCoord2f(0.00,0); glVertex3f(-D,-0.1*D,-D);
-  glTexCoord2f(0.25,0); glVertex3f(+D,-0.1*D,-D);
-  glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
-  glTexCoord2f(0.00,1); glVertex3f(-D,+D,-D);
+  glTexCoord2f(0,0); glVertex3f(-D,-0.1*D,-D);
+  glTexCoord2f(1,0); glVertex3f(+D,-0.1*D,-D);
+  glTexCoord2f(1,1); glVertex3f(+D,+D,-D);
+  glTexCoord2f(0,1); glVertex3f(-D,+D,-D);
+  glEnd();
 
-  glTexCoord2f(0.25,0); glVertex3f(+D,-0.1*D,-D);
-  glTexCoord2f(0.50,0); glVertex3f(+D,-0.1*D,+D);
-  glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
-  glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
 
-  glTexCoord2f(0.50,0); glVertex3f(+D,-0.1*D,+D);
-  glTexCoord2f(0.75,0); glVertex3f(-D,-0.1*D,+D);
-  glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
-  glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
+  //right
+    glBindTexture(GL_TEXTURE_2D,skyTex[0]);
+ glBegin(GL_QUADS);
+ 
+  glTexCoord2f(0,0); glVertex3f(+D,-0.1*D,-D);
+  glTexCoord2f(1,0); glVertex3f(+D,-0.1*D,+D);
+  glTexCoord2f(1,1); glVertex3f(+D,+D,+D);
+  glTexCoord2f(0,1); glVertex3f(+D,+D,-D);
+  glEnd();
 
-  glTexCoord2f(0.75,0); glVertex3f(-D,-0.1*D,+D);
-  glTexCoord2f(1.00,0); glVertex3f(-D,-0.1*D,-D);
-  glTexCoord2f(1.00,1); glVertex3f(-D,+D,-D);
-  glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
+  //back
+    glBindTexture(GL_TEXTURE_2D,skyTex[3]);
+ glBegin(GL_QUADS);
+ 
+  glTexCoord2f(0,0); glVertex3f(+D,-0.1*D,+D);
+  glTexCoord2f(1,0); glVertex3f(-D,-0.1*D,+D);
+  glTexCoord2f(1,1); glVertex3f(-D,+D,+D);
+  glTexCoord2f(0,1); glVertex3f(+D,+D,+D);
+ glEnd();
+
+ //left
+    glBindTexture(GL_TEXTURE_2D,skyTex[1]);
+ glBegin(GL_QUADS);
+ 
+  glTexCoord2f(0,0); glVertex3f(-D,-0.1*D,+D);
+  glTexCoord2f(1,0); glVertex3f(-D,-0.1*D,-D);
+  glTexCoord2f(1,1); glVertex3f(-D,+D,-D);
+  glTexCoord2f(0,1); glVertex3f(-D,+D,+D);
   glEnd();
 
   //  Top
-  glBindTexture(GL_TEXTURE_2D,skyTex[1]);
+  glBindTexture(GL_TEXTURE_2D,skyTex[4]);
   drawTopSkyBox(D);
 
   //Bottom
@@ -270,11 +289,13 @@ void skyBox(double D)
       }
   */
 
+    glBindTexture(GL_TEXTURE_2D,skyTex[5]);
+
   glBegin(GL_QUADS);
-  glTexCoord2f(1.0,1); glVertex3f(-D,-0.01*D,+D);
-  glTexCoord2f(0.5,1); glVertex3f(+D,-0.01*D,+D);
-  glTexCoord2f(0.5,0); glVertex3f(+D,-0.01*D,-D);
-  glTexCoord2f(1.0,0); glVertex3f(-D,-0.01*D,-D);
+  glTexCoord2f(0,0); glVertex3f(-D,-0.01*D,+D);
+  glTexCoord2f(1,0); glVertex3f(+D,-0.01*D,+D);
+  glTexCoord2f(1,1); glVertex3f(+D,-0.01*D,-D);
+  glTexCoord2f(0,1); glVertex3f(-D,-0.01*D,-D);
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
@@ -357,134 +378,136 @@ void drawWaterRipples(int sx, int sy, int sz,int tx, int ty, int tz)
 	}
     }
 
+  if(waterTexture){
   /* Normals */
- // for (j = 0; j < RESOLUTION; j++)
- //    for (i = 0; i <= RESOLUTION; i++)
- //      {
- // 	indice = 6 * (i + j * (RESOLUTION + 1));
+ for (j = 0; j < RESOLUTION; j++)
+    for (i = 0; i <= RESOLUTION; i++)
+      {
+ 	indice = 6 * (i + j * (RESOLUTION + 1));
 
- // 	v1x = surface[indice + 3];
- // 	v1y = surface[indice + 4];
- // 	v1z = surface[indice + 5];
+ 	v1x = surface[indice + 3];
+ 	v1y = surface[indice + 4];
+ 	v1z = surface[indice + 5];
 
- // 	v2x = v1x;
- // 	v2y = surface[indice + 1];
- // 	v2z = surface[indice + 2];
+ 	v2x = v1x;
+ 	v2y = surface[indice + 1];
+ 	v2z = surface[indice + 2];
 
- // 	if (i < RESOLUTION)
- // 	  {
- // 	    v3x = surface[indice + 9];
- // 	    v3y = surface[indice + 10];
- // 	    v3z = v1z;
- // 	  }
- // 	else
- // 	  {
- // 	    v3x = xn;
- // 	    v3y = zVal(xn, v1z, t);
- // 	    v3z = v1z;
- // 	  }
+ 	if (i < RESOLUTION)
+ 	  {
+ 	    v3x = surface[indice + 9];
+ 	    v3y = surface[indice + 10];
+ 	    v3z = v1z;
+ 	  }
+ 	else
+ 	  {
+ 	    v3x = xn;
+ 	    v3y = zVal(xn, v1z, t);
+ 	    v3z = v1z;
+ 	  }
 
- // 	vax =  v2x - v1x;
- // 	vay =  v2y - v1y;
- // 	vaz =  v2z - v1z;
+ 	vax =  v2x - v1x;
+ 	vay =  v2y - v1y;
+ 	vaz =  v2z - v1z;
 
- // 	vbx = v3x - v1x;
- // 	vby = v3y - v1y;
- // 	vbz = v3z - v1z;
+ 	vbx = v3x - v1x;
+ 	vby = v3y - v1y;
+ 	vbz = v3z - v1z;
 
- // 	nx = (vby * vaz) - (vbz * vay);
- // 	ny = (vbz * vax) - (vbx * vaz);
- // 	nz = (vbx * vay) - (vby * vax);
+ 	nx = (vby * vaz) - (vbz * vay);
+ 	ny = (vbz * vax) - (vbx * vaz);
+ 	nz = (vbx * vay) - (vby * vax);
 
- // 	l = sqrtf (nx * nx + ny * ny + nz * nz);
- // 	if (l != 0)
- // 	  {
- // 	    l = 1 / l;
- // 	    normal[indice + 3] = nx * l;
- // 	    normal[indice + 4] = ny * l;
- // 	    normal[indice + 5] = nz * l;
- // 	  }
- // 	else
- // 	  {
- // 	    normal[indice + 3] = 0;
- // 	    normal[indice + 4] = 1;
- // 	    normal[indice + 5] = 0;
- // 	  }
-
-
- // 	if (j != 0)
- // 	  {
- // 	    /* Values were computed during the previous loop */
- // 	    preindice = 6 * (i + (j - 1) * (RESOLUTION + 1));
- // 	    normal[indice] = normal[preindice + 3];
- // 	    normal[indice + 1] = normal[preindice + 4];
- // 	    normal[indice + 2] = normal[preindice + 5];
- // 	  }
- // 	else
- // 	  {
- // 	    /* 	    v1x = v1x; */
- // 	    v1y = zVal(v1x, (j - 1) * delta - 1, t);
- // 	    v1z = (j - 1) * delta - 1;
-
- // 	    /* 	    v3x = v3x; */
- // 	    v3y = zVal(v3x, v2z, t);
- // 	    v3z = v2z;
-
- // 	    vax = v1x - v2x;
- // 	    vay = v1y - v2y;
- // 	    vaz = v1z - v2z;
-
- // 	    vbx = v3x - v2x;
- // 	    vby = v3y - v2y;
- // 	    vbz = v3z - v2z;
-
- // 	    nx = (vby * vaz) - (vbz * vay);
- // 	    ny = (vbz * vax) - (vbx * vaz);
- // 	    nz = (vbx * vay) - (vby * vax);
-
- // 	    l = sqrtf (nx * nx + ny * ny + nz * nz);
- // 	    if (l != 0)
- // 	      {
- // 		l = 1 / l;
- // 		normal[indice] = nx * l;
- // 		normal[indice + 1] = ny * l;
- // 		normal[indice + 2] = nz * l;
- // 	      }
- // 	    else
- // 	      {
- // 		normal[indice] = 0;
- // 		normal[indice + 1] = 1;
- // 		normal[indice + 2] = 0;
- // 	      }
- // 	  }
- //      }
+ 	l = sqrtf (nx * nx + ny * ny + nz * nz);
+ 	if (l != 0)
+ 	  {
+ 	    l = 1 / l;
+ 	    normal[indice + 3] = nx * l;
+ 	    normal[indice + 4] = ny * l;
+ 	    normal[indice + 5] = nz * l;
+ 	  }
+ 	else
+ 	  {
+ 	    normal[indice + 3] = 0;
+ 	    normal[indice + 4] = 1;
+ 	    normal[indice + 5] = 0;
+ 	  }
 
 
-  /* Render wireframe? */
-  //glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+ 	if (j != 0)
+ 	  {
+ 	    /* Values were computed during the previous loop */
+ 	    preindice = 6 * (i + (j - 1) * (RESOLUTION + 1));
+ 	    normal[indice] = normal[preindice + 3];
+ 	    normal[indice + 1] = normal[preindice + 4];
+ 	    normal[indice + 2] = normal[preindice + 5];
+ 	  }
+ 	else
+ 	  {
+ 	    /* 	    v1x = v1x; */
+ 	    v1y = zVal(v1x, (j - 1) * delta - 1, t);
+ 	    v1z = (j - 1) * delta - 1;
 
+ 	    /* 	    v3x = v3x; */
+ 	    v3y = zVal(v3x, v2z, t);
+ 	    v3z = v2z;
+
+ 	    vax = v1x - v2x;
+ 	    vay = v1y - v2y;
+ 	    vaz = v1z - v2z;
+
+ 	    vbx = v3x - v2x;
+ 	    vby = v3y - v2y;
+ 	    vbz = v3z - v2z;
+
+ 	    nx = (vby * vaz) - (vbz * vay);
+ 	    ny = (vbz * vax) - (vbx * vaz);
+ 	    nz = (vbx * vay) - (vby * vax);
+
+ 	    l = sqrtf (nx * nx + ny * ny + nz * nz);
+ 	    if (l != 0)
+ 	      {
+ 		l = 1 / l;
+ 		normal[indice] = nx * l;
+ 		normal[indice + 1] = ny * l;
+ 		normal[indice + 2] = nz * l;
+ 	      }
+ 	    else
+ 	      {
+ 		normal[indice] = 0;
+ 		normal[indice + 1] = 1;
+ 		normal[indice + 2] = 0;
+ 	      }
+ 	  }
+      }
+  }
   /* The water */
-  //GLfloat texVertices [] = {0,0,1,0,0.5,0.5};
+  GLfloat texVertices [] = {0,0,1,0,0.5,0.5};
    
 
   glColor4f(0.39,0.58,0.92,0.5);
   //glColor3f(1,1,1);
-  //glEnableClientState (GL_NORMAL_ARRAY);
+  glEnableClientState (GL_NORMAL_ARRAY);
   glEnableClientState (GL_VERTEX_ARRAY);
   //glEnableClientState (GL_TEXTURE_COORD_ARRAY_EXT);
 
 
-  //glNormalPointer (GL_FLOAT, 0, normal);
-  glVertexPointer (3, GL_FLOAT, 0, surface);
-  //glTexCoordPointer(1, GL_FLOAT, 0, texVertices);
-
-  glEnable (GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, waterTex);
+  if(waterTexture)
+    {
+      glNormalPointer (GL_FLOAT, 0, normal);
+        glEnable (GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, waterTex);
     
-  glEnable(GL_TEXTURE_GEN_S);
-  glEnable(GL_TEXTURE_GEN_T);
-  glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-  glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+	glEnable(GL_TEXTURE_GEN_S);
+	glEnable(GL_TEXTURE_GEN_T);
+	glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+	glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+
+    }
+  
+  glVertexPointer (3, GL_FLOAT, 0, surface);
+  glTexCoordPointer(1, GL_FLOAT, 0, texVertices);
+
 
   
   for (i = 0; i < RESOLUTION; i++)
@@ -492,12 +515,15 @@ void drawWaterRipples(int sx, int sy, int sz,int tx, int ty, int tz)
       glDrawArrays (GL_TRIANGLE_STRIP, i * length, length);
     }
 
+  if(waterTexture){
   glDisable(GL_TEXTURE_GEN_S);
   glDisable(GL_TEXTURE_GEN_T);
   
   glDisable(GL_TEXTURE_2D);
+  glDisableClientState (GL_NORMAL_ARRAY);
+  }
   glDisableClientState(GL_VERTEX_ARRAY);
-  //glDisableClientState (GL_NORMAL_ARRAY);
+
   ErrCheck("water");
   glPopMatrix();
 }
@@ -669,18 +695,19 @@ void display()
   
   //tree-1: right
   glPushMatrix();
-  glTranslatef(323,0,-184);
+  glTranslatef(319,46,-184);
   glScalef(2,2,2);
   glCallList(objTree);
   glPopMatrix();
   
-  /*//tree-3: left
+  //tree-3: left
   glPushMatrix();
+  glTranslatef(-310,43,45);
   glScalef(1,1.15,1);
-  glTranslatef(-310,0,45);
   glCallList(objTree);
   glPopMatrix();
-  
+
+  /*
   //tree-2: left
   glPushMatrix();
   glTranslatef(-312,0,133);
@@ -696,7 +723,7 @@ void display()
   */
   //tree in the middle
   glPushMatrix();
-  glTranslatef(0,0,-308);
+  glTranslatef(0,46,-305);
   glCallList(objTree);
   glPopMatrix();
 
@@ -704,10 +731,10 @@ void display()
   //glLoadIdentity ();
   //glMatrixMode(GL_PROJECTION);
  
-      //back wall
+   //back wall
    glPushMatrix();
    glColor3f(1, 1, 1);
-     glBindTexture (GL_TEXTURE_2D, marbleTex);
+   glBindTexture (GL_TEXTURE_2D, marbleTex);
    glTranslatef(1,26,-326);
    glScalef(16,1,1);
    glutSolidCube(41);
@@ -775,18 +802,18 @@ void display()
    
   glDisable(GL_DEPTH_TEST);
   glPushMatrix();
-  glTranslatef(0,0,-308);
+  glTranslatef(0,0,-296);
   glScalef(0.8,-1,4);
    glCallList(objTree);
   glPopMatrix();
-  /*
+  
     //tree-3: left
   glPushMatrix();
   glScalef(1,-1.15,1);
   glTranslatef(-310,0,45);
   glCallList(objTree);
   glPopMatrix();
-  
+  /*
   //tree-2: left
   glPushMatrix();
     glScalef(1,-1,1);
@@ -805,9 +832,12 @@ void display()
   
   //tree-1: right
   glPushMatrix();
+  glEnable(GL_DEPTH_TEST);
   glTranslatef(323,0,-184);
   glScalef(2,-2,2);
+  glDisable(GL_DEPTH_TEST);
   glCallList(objTree);
+ 
   glPopMatrix();
 
   glDisable(GL_STENCIL_TEST);
@@ -829,14 +859,16 @@ void display()
       float Ambient[]   = {0.01*ambient ,0.01*ambient ,0.01*ambient ,1.0};
       float Diffuse[]   = {0.01*diffuse ,0.01*diffuse ,0.01*diffuse ,1.0};
       float Specular[]  = {0.01*specular,0.01*specular,0.01*specular,1.0};
-
+      float Emission[] =  {0.01*emission,0.01*emission,0.01*emission,1.0};
+      float Shininess[] =  {0};
+      
       //Light position
       //float Position[]  = {dist*Cos(zh),ylight,dist*Sin(zh),1.0};
-      float Position[] = {0,280,0};
+      float Position[] = {-306,234,301};
       //color for the rotating light
       glColor3f(1,1,1);
-            
-      ball(0,Position[1],0,15);
+
+      ball(Position[0],Position[1],Position[2],15);
 
       //keeps the normal vector unit length
       glEnable(GL_NORMALIZE);
@@ -855,7 +887,11 @@ void display()
       //Enable light 0
       glEnable(GL_LIGHT0);
 
+      glPushMatrix();
       //settings for light  0
+      glMaterialfv(GL_FRONT, GL_SHININESS, Shininess);
+      glMaterialfv(GL_BACK, GL_SHININESS, Shininess);
+      glPopMatrix();
       glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
       glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
       glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
@@ -950,11 +986,32 @@ void display()
   glPushMatrix();
   glColor4f(0.49, 0.61, 0.75, 0.8);
   glTranslatef(1,25,280);
-  glScalef(16,1,1);
+  glScalef(15.9,1,1);
   glutSolidCube(41);
   glPopMatrix();
   glDisable(GL_BLEND);  
 
+  /* 
+     glUseProgram(refractShader);
+      int id;
+ 
+      id = glGetUniformLocation(refractShader,"MVMatrix");
+      if (id>=0) glUniform1f(id,X);
+      id = glGetUniformLocation(refractShader,"MVPMatrix");
+      if (id>=0) glUniform1f(id,Y);
+      id = glGetUniformLocation(refractShader,"NormalMatrix");
+      if (id>=0) glUniform1f(id,Z);
+      id = glGetUniformLocation(refractShader,"TextureMatrix");
+      if (id>=0) glUniform1f(id,time);
+
+   //  Draw the teapot or cube
+
+   glEnable(GL_TEXTURE_2D);
+   glutSolidTeapot(1.0);
+   glDisable(GL_TEXTURE_2D);
+   //  No shader for what follows
+   glUseProgram(0);
+  */
   //differentAngle();
    
   glFlush();
@@ -996,7 +1053,7 @@ void keyboard(unsigned char key, int x, int y)
     case 'D':
       if (diffuse > 0) diffuse -= 1;
       break;
-      
+
     case 'L':
     case 'l':
       if(light)
@@ -1014,7 +1071,14 @@ void keyboard(unsigned char key, int x, int y)
       Ey += 3;
       Ly += 3;
       break;
-
+    case 't':
+    case 'T':
+      if(waterTexture)
+	waterTexture = 0;
+      else
+	waterTexture = 1;
+      break;
+      
     case 'x':
       movX += 1;
       break;
@@ -1100,7 +1164,7 @@ static void special(int k, int x, int y) {
     
   }
 
-  //printf("Ex %f Ey %f Ez %f Lx %f, Ly%f, Lz %f, angle %d\n", Ex,Ey,Ez, Lx, Ly, Lz, angle);
+  printf("Ex %f Ey %f Ez %f Lx %f, Ly%f, Lz %f, angle %d\n", Ex,Ey,Ez, Lx, Ly, Lz, angle);
   glutPostRedisplay();
 }
 ////////////////////////////////////////////////////
@@ -1324,9 +1388,13 @@ void initGraphics(int argc, char *argv[])
   glutAddSubMenu("Rendering Type", rendering_type_submenu);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   
-  //loading textures for the sky box with mipmap
-  skyTex[0] = LoadTexBMP("sky0.bmp",1);
-  skyTex[1] = LoadTexBMP("sky1.bmp",1);
+  //loading textures -left,right,front,back,up and down
+  skyTex[0] = LoadTexBMP("darkcity_lf.bmp",0);
+  skyTex[1] = LoadTexBMP("darkcity_rt.bmp",0);
+  skyTex[2] = LoadTexBMP("darkcity_ft.bmp",0);
+  skyTex[3] = LoadTexBMP("darkcity_bk.bmp",0);
+  skyTex[4] = LoadTexBMP("darkcity_up.bmp",0);
+  skyTex[5] = LoadTexBMP("darkcity_dn.bmp",0);
 
       //texture for water
   waterTex = LoadTexBMP("reflection.bmp",1);  
@@ -1337,8 +1405,7 @@ void initGraphics(int argc, char *argv[])
   objBlocks = LoadOBJ("predator.obj");
   //ReadDEM("saddleback.dem");
 
-  smokeReset();
-  glutTimerFunc(50,increment,0);
+  refractShader = CreateShaderProg("refract.vert","refract.frag");
   
   ErrCheck("init");
 }
