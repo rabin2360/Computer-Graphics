@@ -5,12 +5,12 @@ const float XRange = 1000;
 
 Sphere::Sphere() {
   //center of the sphere for fireworks
-  set(&center.location, /*(myRandom() - 0.5)*XRange*/0, 0.0, 0.0);
+  set(&center.location, /*(myRandom() - 0.5)*XRange*/0, 0.0, -350.0);
 
   //speed of the ball
-  center.speed.x = (myRandom() - 0.5)*5;
-  center.speed.y = (myRandom() + 0.5)*6.5;
-  center.speed.z = (myRandom() - 0.5)*5;
+  center.speed.x = (myRandom() - 0.5)*8;
+  center.speed.y = (myRandom() + 1)*6.5;
+  center.speed.z = (myRandom() - 0.5)*4;
 
   //setting the acceleration for the ball
   set(&center.acceleration, 0, 0-GRAVITY_POWER, 0);
