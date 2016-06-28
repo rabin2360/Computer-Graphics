@@ -12,11 +12,11 @@ extern "C"
 #include "CSCI5229.h"
 }
 
+//fireworks variables
 #define RENDERING_TRAIL 1
 
 list<Particle *> particles;
 int frames;
-//smaller than one?
 list<Sphere *> spheres;
 float SPHERES_PER_FRAME;
 float GRAVITY_POWER;
@@ -24,7 +24,6 @@ int SPHERE_TTL;
 int SPHERE_PARTICLES;
 int PARTICLE_TTL;
 float POINT_LINE_SIZE;
-
 int renderingType = 0;
 
 
@@ -82,12 +81,13 @@ int waterTexture = 1;
 
 //pool variables
 int marbleTex;
+int fogMode;
 
 //global view variables
 int gWidth;
 int gHeight;
   
-#define RESOLUTION 40 //water ripples rate
+#define RESOLUTION 30 //water ripples rate
 static float surface[6 * RESOLUTION * (RESOLUTION + 1)];
 static float normal[6 * RESOLUTION * (RESOLUTION + 1)];
 
@@ -98,15 +98,7 @@ int movX = 0;
 int movZ = 0;
 int movY = 0;
 
-int wsize = 3200;
-bool paused = false;
-int squaresize = 16;
-GLubyte square[16][16][2];
-GLuint textureObj;
-std::vector<int> arrayOfSquares;  // contains x- and y-coords, x- and y- velocity, current rotation, rotation velocity, and frames since creation
-int smokeAmt=5,varAmt=0;  // control amount and placement of smoke
-int wind=0;
-
+///////////////////////////////////////////////////
 void initData(void) {
   frames = 0;
   SPHERES_PER_FRAME = 0.03;
@@ -120,9 +112,6 @@ void initData(void) {
 
 ///////////////////////////////////////////////
 
-/*
- *  Read DEM from file
- */
 void ReadDEM(char* file)
 {
   int i,j;
@@ -139,7 +128,7 @@ void ReadDEM(char* file)
 }
 
 
-void animate(void)
+void idle(void)
 {
 
   frames++;
@@ -195,9 +184,9 @@ static void ball(double x,double y,double z,double r)
 
   //  White ball
   glColor3f(1,1,1);
-  glMaterialfv(GL_FRONT,GL_SHININESS,shinyvec);
-  glMaterialfv(GL_FRONT,GL_SPECULAR,yellow);
-  glMaterialfv(GL_FRONT,GL_EMISSION,Emission);
+  glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,shinyvec);
+  glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,yellow);
+  glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
   
   glutSolidSphere(r, 18, 18);
 
@@ -236,8 +225,8 @@ void skyBox(double D)
 
 
   //right
-    glBindTexture(GL_TEXTURE_2D,skyTex[0]);
- glBegin(GL_QUADS);
+  glBindTexture(GL_TEXTURE_2D,skyTex[0]);
+  glBegin(GL_QUADS);
  
   glTexCoord2f(0,0); glVertex3f(+D,-0.1*D,-D);
   glTexCoord2f(1,0); glVertex3f(+D,-0.1*D,+D);
@@ -246,18 +235,18 @@ void skyBox(double D)
   glEnd();
 
   //back
-    glBindTexture(GL_TEXTURE_2D,skyTex[3]);
- glBegin(GL_QUADS);
+  glBindTexture(GL_TEXTURE_2D,skyTex[3]);
+  glBegin(GL_QUADS);
  
   glTexCoord2f(0,0); glVertex3f(+D,-0.1*D,+D);
   glTexCoord2f(1,0); glVertex3f(-D,-0.1*D,+D);
   glTexCoord2f(1,1); glVertex3f(-D,+D,+D);
   glTexCoord2f(0,1); glVertex3f(+D,+D,+D);
- glEnd();
+  glEnd();
 
- //left
-    glBindTexture(GL_TEXTURE_2D,skyTex[1]);
- glBegin(GL_QUADS);
+  //left
+  glBindTexture(GL_TEXTURE_2D,skyTex[1]);
+  glBegin(GL_QUADS);
  
   glTexCoord2f(0,0); glVertex3f(-D,-0.1*D,+D);
   glTexCoord2f(1,0); glVertex3f(-D,-0.1*D,-D);
@@ -271,25 +260,25 @@ void skyBox(double D)
 
   //Bottom
   /*int i,j;
-  double z0 = (zmin+zmax)/2;
-  //glColor3f(1,1,0);
-  for (i=0;i<64;i++)
+    double z0 = (zmin+zmax)/2;
+    //glColor3f(1,1,0);
+    for (i=0;i<64;i++)
     for (j=0;j<64;j++)
-      {
+    {
 	  
-	float x=32*i-1024;
-	float y=32*j-1024;
-	glNormal3d(0,1,0);
-	glBegin(GL_QUADS);
-	glTexCoord2f((i+0)/64.,(j+0)/64.); glVertex3d(x+ 0,zmag*(z[i+0][j+0]-z0),y+ 0);
-	glTexCoord2f((i+1)/64.,(j+0)/64.); glVertex3d(x+32,zmag*(z[i+1][j+0]-z0),y+ 0);
-	glTexCoord2f((i+1)/64.,(j+1)/64.); glVertex3d(x+32,zmag*(z[i+1][j+1]-z0),y+32);
-	glTexCoord2f((i+0)/64.,(j+1)/64.); glVertex3d(x+ 0,zmag*(z[i+0][j+1]-z0),y+32);
-	glEnd();
-      }
+    float x=32*i-1024;
+    float y=32*j-1024;
+    glNormal3d(0,1,0);
+    glBegin(GL_QUADS);
+    glTexCoord2f((i+0)/64.,(j+0)/64.); glVertex3d(x+ 0,zmag*(z[i+0][j+0]-z0),y+ 0);
+    glTexCoord2f((i+1)/64.,(j+0)/64.); glVertex3d(x+32,zmag*(z[i+1][j+0]-z0),y+ 0);
+    glTexCoord2f((i+1)/64.,(j+1)/64.); glVertex3d(x+32,zmag*(z[i+1][j+1]-z0),y+32);
+    glTexCoord2f((i+0)/64.,(j+1)/64.); glVertex3d(x+ 0,zmag*(z[i+0][j+1]-z0),y+32);
+    glEnd();
+    }
   */
 
-    glBindTexture(GL_TEXTURE_2D,skyTex[5]);
+  glBindTexture(GL_TEXTURE_2D,skyTex[5]);
 
   glBegin(GL_QUADS);
   glTexCoord2f(0,0); glVertex3f(-D,-0.01*D,+D);
@@ -317,37 +306,16 @@ void drawWaterRipples(int sx, int sy, int sz,int tx, int ty, int tz)
   unsigned int indice;
   unsigned int preindice;
 
-  /* Yes, I know, this is quite ugly... */
-  float v1x;
-  float v1y;
-  float v1z;
-
-  float v2x;
-  float v2y;
-  float v2z;
-
-  float v3x;
-  float v3y;
-  float v3z;
-
-  float vax;
-  float vay;
-  float vaz;
-
-  float vbx;
-  float vby;
-  float vbz;
-
-  float nx;
-  float ny;
-  float nz;
-
+  float v1x; float v1y; float v1z;
+  float v2x; float v2y; float v2z;
+  float v3x; float v3y; float v3z;
+  float vax; float vay; float vaz;
+  float vbx; float vby; float vbz;
+  float nx; float ny; float nz;
   float l;
 
   glTranslatef (tx, ty, tz);
   glScalef(sx,sy,sz);
-  //glRotatef (rotate_y, 1, 0, 0);
-  //glRotatef (rotate_x, 0, 1, 0);
 
   /* Vertices */
   for (j = 0; j < RESOLUTION; j++)
@@ -379,289 +347,220 @@ void drawWaterRipples(int sx, int sy, int sz,int tx, int ty, int tz)
     }
 
   if(waterTexture){
-  /* Normals */
- for (j = 0; j < RESOLUTION; j++)
-    for (i = 0; i <= RESOLUTION; i++)
-      {
- 	indice = 6 * (i + j * (RESOLUTION + 1));
+    /* Normals */
+    for (j = 0; j < RESOLUTION; j++)
+      for (i = 0; i <= RESOLUTION; i++)
+	{
+	  indice = 6 * (i + j * (RESOLUTION + 1));
 
- 	v1x = surface[indice + 3];
- 	v1y = surface[indice + 4];
- 	v1z = surface[indice + 5];
+	  v1x = surface[indice + 3];
+	  v1y = surface[indice + 4];
+	  v1z = surface[indice + 5];
 
- 	v2x = v1x;
- 	v2y = surface[indice + 1];
- 	v2z = surface[indice + 2];
+	  v2x = v1x;
+	  v2y = surface[indice + 1];
+	  v2z = surface[indice + 2];
 
- 	if (i < RESOLUTION)
- 	  {
- 	    v3x = surface[indice + 9];
- 	    v3y = surface[indice + 10];
- 	    v3z = v1z;
- 	  }
- 	else
- 	  {
- 	    v3x = xn;
- 	    v3y = zVal(xn, v1z, t);
- 	    v3z = v1z;
- 	  }
+	  if (i < RESOLUTION)
+	    {
+	      v3x = surface[indice + 9];
+	      v3y = surface[indice + 10];
+	      v3z = v1z;
+	    }
+	  else
+	    {
+	      v3x = xn;
+	      v3y = zVal(xn, v1z, t);
+	      v3z = v1z;
+	    }
 
- 	vax =  v2x - v1x;
- 	vay =  v2y - v1y;
- 	vaz =  v2z - v1z;
+	  vax =  v2x - v1x;
+	  vay =  v2y - v1y;
+	  vaz =  v2z - v1z;
 
- 	vbx = v3x - v1x;
- 	vby = v3y - v1y;
- 	vbz = v3z - v1z;
+	  vbx = v3x - v1x;
+	  vby = v3y - v1y;
+	  vbz = v3z - v1z;
 
- 	nx = (vby * vaz) - (vbz * vay);
- 	ny = (vbz * vax) - (vbx * vaz);
- 	nz = (vbx * vay) - (vby * vax);
+	  nx = (vby * vaz) - (vbz * vay);
+	  ny = (vbz * vax) - (vbx * vaz);
+	  nz = (vbx * vay) - (vby * vax);
 
- 	l = sqrtf (nx * nx + ny * ny + nz * nz);
- 	if (l != 0)
- 	  {
- 	    l = 1 / l;
- 	    normal[indice + 3] = nx * l;
- 	    normal[indice + 4] = ny * l;
- 	    normal[indice + 5] = nz * l;
- 	  }
- 	else
- 	  {
- 	    normal[indice + 3] = 0;
- 	    normal[indice + 4] = 1;
- 	    normal[indice + 5] = 0;
- 	  }
+	  l = sqrtf (nx * nx + ny * ny + nz * nz);
+	  if (l != 0)
+	    {
+	      l = 1 / l;
+	      normal[indice + 3] = nx * l;
+	      normal[indice + 4] = ny * l;
+	      normal[indice + 5] = nz * l;
+	    }
+	  else
+	    {
+	      normal[indice + 3] = 0;
+	      normal[indice + 4] = 1;
+	      normal[indice + 5] = 0;
+	    }
 
 
- 	if (j != 0)
- 	  {
- 	    /* Values were computed during the previous loop */
- 	    preindice = 6 * (i + (j - 1) * (RESOLUTION + 1));
- 	    normal[indice] = normal[preindice + 3];
- 	    normal[indice + 1] = normal[preindice + 4];
- 	    normal[indice + 2] = normal[preindice + 5];
- 	  }
- 	else
- 	  {
- 	    /* 	    v1x = v1x; */
- 	    v1y = zVal(v1x, (j - 1) * delta - 1, t);
- 	    v1z = (j - 1) * delta - 1;
+	  if (j != 0)
+	    {
+	      /* Values were computed during the previous loop */
+	      preindice = 6 * (i + (j - 1) * (RESOLUTION + 1));
+	      normal[indice] = normal[preindice + 3];
+	      normal[indice + 1] = normal[preindice + 4];
+	      normal[indice + 2] = normal[preindice + 5];
+	    }
+	  else
+	    {
+	      /* 	    v1x = v1x; */
+	      v1y = zVal(v1x, (j - 1) * delta - 1, t);
+	      v1z = (j - 1) * delta - 1;
 
- 	    /* 	    v3x = v3x; */
- 	    v3y = zVal(v3x, v2z, t);
- 	    v3z = v2z;
+	      /* 	    v3x = v3x; */
+	      v3y = zVal(v3x, v2z, t);
+	      v3z = v2z;
 
- 	    vax = v1x - v2x;
- 	    vay = v1y - v2y;
- 	    vaz = v1z - v2z;
+	      vax = v1x - v2x;
+	      vay = v1y - v2y;
+	      vaz = v1z - v2z;
 
- 	    vbx = v3x - v2x;
- 	    vby = v3y - v2y;
- 	    vbz = v3z - v2z;
+	      vbx = v3x - v2x;
+	      vby = v3y - v2y;
+	      vbz = v3z - v2z;
 
- 	    nx = (vby * vaz) - (vbz * vay);
- 	    ny = (vbz * vax) - (vbx * vaz);
- 	    nz = (vbx * vay) - (vby * vax);
+	      nx = (vby * vaz) - (vbz * vay);
+	      ny = (vbz * vax) - (vbx * vaz);
+	      nz = (vbx * vay) - (vby * vax);
 
- 	    l = sqrtf (nx * nx + ny * ny + nz * nz);
- 	    if (l != 0)
- 	      {
- 		l = 1 / l;
- 		normal[indice] = nx * l;
- 		normal[indice + 1] = ny * l;
- 		normal[indice + 2] = nz * l;
- 	      }
- 	    else
- 	      {
- 		normal[indice] = 0;
- 		normal[indice + 1] = 1;
- 		normal[indice + 2] = 0;
- 	      }
- 	  }
-      }
+	      l = sqrtf (nx * nx + ny * ny + nz * nz);
+	      if (l != 0)
+		{
+		  l = 1 / l;
+		  normal[indice] = nx * l;
+		  normal[indice + 1] = ny * l;
+		  normal[indice + 2] = nz * l;
+		}
+	      else
+		{
+		  normal[indice] = 0;
+		  normal[indice + 1] = 1;
+		  normal[indice + 2] = 0;
+		}
+	    }
+	}
   }
-  /* The water */
-  GLfloat texVertices [] = {0,0,1,0,0.5,0.5};
-   
-
+  
   glColor4f(0.39,0.58,0.92,0.5);
-  //glColor3f(1,1,1);
   glEnableClientState (GL_NORMAL_ARRAY);
   glEnableClientState (GL_VERTEX_ARRAY);
-  //glEnableClientState (GL_TEXTURE_COORD_ARRAY_EXT);
-
-
+  
   if(waterTexture)
     {
       glNormalPointer (GL_FLOAT, 0, normal);
-        glEnable (GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, waterTex);
+      glEnable (GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, waterTex);
     
-	glEnable(GL_TEXTURE_GEN_S);
-	glEnable(GL_TEXTURE_GEN_T);
-	glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-	glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+      glEnable(GL_TEXTURE_GEN_S);
+      glEnable(GL_TEXTURE_GEN_T);
+      glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+      glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 
     }
   
   glVertexPointer (3, GL_FLOAT, 0, surface);
-  glTexCoordPointer(1, GL_FLOAT, 0, texVertices);
-
-
-  
+    
   for (i = 0; i < RESOLUTION; i++)
+    glDrawArrays (GL_TRIANGLE_STRIP, i * length, length);
+ 
+  if(waterTexture)
     {
-      glDrawArrays (GL_TRIANGLE_STRIP, i * length, length);
+      glDisable(GL_TEXTURE_GEN_S);
+      glDisable(GL_TEXTURE_GEN_T);
+  
+      glDisable(GL_TEXTURE_2D);
+      glDisableClientState (GL_NORMAL_ARRAY);
     }
 
-  if(waterTexture){
-  glDisable(GL_TEXTURE_GEN_S);
-  glDisable(GL_TEXTURE_GEN_T);
-  
-  glDisable(GL_TEXTURE_2D);
-  glDisableClientState (GL_NORMAL_ARRAY);
-  }
   glDisableClientState(GL_VERTEX_ARRAY);
 
   ErrCheck("water");
   glPopMatrix();
 }
 
-// creates random, smoothed noise texture to use as the basis of the smoke
-void makeSquare(){
-  int i,j,k,coeffs[6];
-  double offsets[6];
-  for(i=0;i<6;i++){
-    offsets[i] = 2*M_PI * (rand()%1000)/1000.0;
-  }
-
-  for(i=0;i<squaresize;i++){
-    for(j=0;j<squaresize;j++){
-      square[i][j][0] = 0;
-      for(k=0;k<6;k++) square[i][j][0]+=40*sin(sin(i+offsets[k])*(j+1)*2);
-      square[i][j][1] = 255*(1-pow(hypot(squaresize/2-i,squaresize/2-j)/hypot(squaresize/2,squaresize/2),.5));
-    }
-  }
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-  glGenTextures(1,&textureObj);
-  glBindTexture(GL_TEXTURE_2D,textureObj);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE_ALPHA,squaresize,squaresize,0,GL_LUMINANCE_ALPHA,GL_UNSIGNED_BYTE,square);
-
-  
-}
-
-void makeSmoke()
+void fireworks()
 {
-    glBindTexture(GL_TEXTURE_2D,textureObj);
-    //glMatrixMode(GL_MODELVIEW_MATRIX);
-  glLoadIdentity();
+  //creating fireworks
+  for(auto it = spheres.begin(); it != spheres.end(); it++) {
+    glPushMatrix(); 
 
-  int i;
-    double alpha,size;
-  for(i=arrayOfSquares.size()-7;i>=0;i-=7){
-    // place
-    glLoadIdentity();
-    glTranslatef(arrayOfSquares[i],arrayOfSquares[i+1],0.0);
-    glRotatef(arrayOfSquares[i+4],0.0,0.0,1.0);
+    double alpha = 0;
+	
+    //for each particle, reference the prevLocations
+    glLineWidth(POINT_LINE_SIZE);
+    glBegin(GL_LINE_STRIP);
+    for(auto sphereIterator =  ((*it)->center).prevLocations.begin(); sphereIterator !=  ((*it)->center).prevLocations.end(); sphereIterator++)
+      {
+ 	glColor4f(1, 1, 0, alpha);
+  	glVertex3f((*sphereIterator).x, (*sphereIterator).y,(*sphereIterator).z);
 
-    // set apparent alpha based on time since creation
-    alpha = 1.0 - arrayOfSquares[i+6]/60.0;
-    glColor4f(alpha,alpha,alpha,alpha);
+	    
+ 	alpha += 0.15;
+      }
 
-    // draw with size based on time
-    size = .075 * (1+arrayOfSquares[i+6]);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0,0.0);
-    glVertex2f(-squaresize*size,-squaresize*size);
-    glTexCoord2f(1.0,0.0);
-    glVertex2f(squaresize*size,-squaresize*size);
-    glTexCoord2f(1.0,1.0);
-    glVertex2f(squaresize*size,squaresize*size);
-    glTexCoord2f(0.0,1.0);
-    glVertex2f(-squaresize*size,squaresize*size);
     glEnd();
 
-    // reset location
-    glLoadIdentity;
-  }
-}
-
-// runs every 50 ms; moves the smoke squares
-void increment(int t){
-  int i,j;
-  while(rand()%(smokeAmt+1)){  // add square
-    arrayOfSquares.push_back(wsize/2+rand()%(2*varAmt+1)-varAmt);  // X
-    arrayOfSquares.push_back(wsize/4+rand()%(2*varAmt+1)-varAmt);  // Y
-    arrayOfSquares.push_back(rand()%5-2);  // X-vel
-    arrayOfSquares.push_back(rand()%3);  // Y-vel
-    arrayOfSquares.push_back(rand()%360);  // rotation
-    arrayOfSquares.push_back(rand()%11-5);  // rotation-vel
-    arrayOfSquares.push_back(0);  // timer
+    glTranslatef(((*it)->center).location.x, ((*it)->center).location.y, ((*it)->center).location.z);
+    glutSolidSphere(1, 18, 18);
+	
+    glPopMatrix();    
   }
 
-  for(i=0;i<arrayOfSquares.size();i+=7){
-    // delete if out of screen or at time of 3 sec
-    if(arrayOfSquares[i]<(-squaresize*4) || arrayOfSquares[i]>wsize+squaresize*4 || arrayOfSquares[i+1]>wsize+squaresize*4 || arrayOfSquares[i+6]>60){
-      for(j=0;j<7;j++){
-	arrayOfSquares.erase(arrayOfSquares.begin()+i);
-      }
-      i -= 7;
-      continue;
+  GLfloat scale = 0.1;
+  
+  switch(renderingType){
+  case RENDERING_TRAIL:
+    glLineWidth(POINT_LINE_SIZE);
+    
+    for(auto it = particles.begin(); it != particles.end(); it++) {
+      glPushMatrix();
+      double alpha = 0;
+
+      GLfloat fireworksEmissionTrails [] = {(*it)->color.x*scale, (*it)->color.y*scale, (*it)->color.z*scale, 1};
+      glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,fireworksEmissionTrails);
+	
+      glBegin(GL_LINE_STRIP);	
+      //for each particle, reference the prevLocations
+      for(auto particleIterator =  (*it)->prevLocations.begin(); particleIterator !=  (*it)->prevLocations.end(); particleIterator++)
+ 	{
+ 	  glColor4f((*it)->color.x, (*it)->color.y, (*it)->color.z, alpha);
+ 	  glVertex3f( (*particleIterator).x,(*particleIterator).y, (*particleIterator).z);
+
+ 	  alpha += 0.1;
+ 	}
+      glEnd();
+      glPopMatrix();
     }
+    
+    break;
+    
+  default:
+    glPushMatrix();
+    glPointSize(POINT_LINE_SIZE);
+    glBegin(GL_POINTS);
+    for(auto it = particles.begin(); it != particles.end(); it++) {
+      GLfloat fireworksEmissionPoints [] = {(*it)->color.x*scale, (*it)->color.y*scale, (*it)->color.z*scale, 1};
+      glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,fireworksEmissionPoints);
 
-    // add velocities to current position
-    arrayOfSquares[i] += arrayOfSquares[i+2];
-    arrayOfSquares[i+1] += arrayOfSquares[i+3];
-    arrayOfSquares[i+4] += arrayOfSquares[i+5];
+      glColor3f((*it)->color.x, (*it)->color.y, (*it)->color.z);
+      glVertex3f((*it)->location.x, (*it)->location.y, (*it)->location.z);
+    }
+    glEnd();
+    glPopMatrix();
+    break;
 
-    // accelerate
-    if(rand()%5==0) arrayOfSquares[i+3]++;
-    if(wind && rand()%(abs(wind)+1) && rand()%5==0) arrayOfSquares[i+2]+=(wind)/abs(wind);
 
-    // add to timer
-    arrayOfSquares[i+6]++;
   }
 
-  // reset timer
-  if(!paused) glutTimerFunc(50,increment,0);
-  glutPostRedisplay();
-}
-
-void smokeReset()
-{
-  arrayOfSquares.clear();
-  makeSquare();
-  paused = false;
-  wind = 0;
-  smokeAmt = 5;
-  varAmt = 0;
-}
-
-void frontWall()
-{
-  //  Draw the wall
-  double i = 0;
-  double j = 0;
-  int inc = 1;
-  glColor3f(0.33,0.33,0.33);
-   glNormal3f(0,0,1); 
-   glBegin(GL_QUADS);
-   for (i=0;i<41;i+=inc)
-      for (j=0;j<41;j+=inc)
-      {
-         glVertex2d(i,j);
-         glVertex2d(i+inc,j);
-         glVertex2d(i+inc,j+inc);
-         glVertex2d(i,j+inc);
-      }
-   glEnd();
-   
 }
 
 void display()
@@ -675,22 +574,22 @@ void display()
 
   gluLookAt(Ex, Ey, Ez,Ex+Lx, Ly, Ez+Lz,0.0, 1.0, 0.0);
 
-   glPushMatrix();
-   skyBox(8*dim);
-   glPopMatrix();
+  glPushMatrix();
+  skyBox(8*dim);
+  glPopMatrix();
 
-   /*glPushMatrix();
-   glTranslatef(0,0,0);
-   glScalef(100,100,100);
-   makeSmoke();
-   glPopMatrix();
-   */
+  /*glPushMatrix();
+    glTranslatef(0,0,0);
+    glScalef(100,100,100);
+    makeSmoke();
+    glPopMatrix();
+  */
    
   /*glPushMatrix();
-  glTranslatef(-293, 44, 305);
-  glScalef(20, 27, 26);
-  glCallList(objBlocks);
-  glPopMatrix();
+    glTranslatef(-293, 44, 305);
+    glScalef(20, 27, 26);
+    glCallList(objBlocks);
+    glPopMatrix();
   */
   
   //tree-1: right
@@ -731,20 +630,20 @@ void display()
   //glLoadIdentity ();
   //glMatrixMode(GL_PROJECTION);
  
-   //back wall
-   glPushMatrix();
-   glColor3f(1, 1, 1);
-   glBindTexture (GL_TEXTURE_2D, marbleTex);
-   glTranslatef(1,26,-326);
-   glScalef(16,1,1);
-   glutSolidCube(41);
+  //back wall
+  glPushMatrix();
+  glColor3f(1, 1, 1);
+  glBindTexture (GL_TEXTURE_2D, marbleTex);
+  glTranslatef(1,26,-326);
+  glScalef(16,1,1);
+  glutSolidCube(41);
   glPopMatrix();
 
   
   //left wall
   glPushMatrix();
 
-   glColor3f(1, 1, 1);
+  glColor3f(1, 1, 1);
   glTranslatef(-306,26,-13);
   glRotatef(-90,0,1,0);
   glScalef(15.3,1,1);
@@ -755,15 +654,13 @@ void display()
   //right wall
   glPushMatrix();
    
-   glColor3f(1, 1, 1);
+  glColor3f(1, 1, 1);
   glTranslatef(308,26,-13);
   glRotatef(-90,0,1,0);
   glScalef(15.3,1,1);
   glutSolidCube(41);
 
- glPopMatrix();
-
-   
+  glPopMatrix();
  
   glDisable(GL_BLEND);  
 
@@ -783,6 +680,7 @@ void display()
   glStencilOp(GL_REPLACE,GL_REPLACE, GL_REPLACE);
   glStencilMask(0xFF);
   glDepthMask(GL_FALSE);
+
   //important, this will make sure that the inverted trees do not appear below the surface but just on the water
   glClear(GL_STENCIL_BUFFER_BIT);
   
@@ -804,10 +702,10 @@ void display()
   glPushMatrix();
   glTranslatef(0,0,-296);
   glScalef(0.8,-1,4);
-   glCallList(objTree);
+  glCallList(objTree);
   glPopMatrix();
   
-    //tree-3: left
+  //tree-3: left
   glPushMatrix();
   glScalef(1,-1.15,1);
   glTranslatef(-310,0,45);
@@ -816,7 +714,7 @@ void display()
   /*
   //tree-2: left
   glPushMatrix();
-    glScalef(1,-1,1);
+  glScalef(1,-1,1);
   glTranslatef(-312,0,133);
   glCallList(objTree);
   glPopMatrix();
@@ -824,7 +722,7 @@ void display()
   
   //tree-1: left
   glPushMatrix();
-    glScalef(1,-1,1);
+  glScalef(1,-1,1);
   glTranslatef(-332,0,199);
   glCallList(objTree);
   glPopMatrix();
@@ -870,6 +768,7 @@ void display()
 
       ball(Position[0],Position[1],Position[2],15);
 
+      glEnable(GL_AUTO_NORMAL);
       //keeps the normal vector unit length
       glEnable(GL_NORMALIZE);
       
@@ -892,97 +791,49 @@ void display()
       glMaterialfv(GL_FRONT, GL_SHININESS, Shininess);
       glMaterialfv(GL_BACK, GL_SHININESS, Shininess);
       glPopMatrix();
+      
       glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
       glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
       glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
       glLightfv(GL_LIGHT0, GL_POSITION, Position);
+
+      if(fogMode){
+	glEnable(GL_FOG);
+	GLfloat fogColor[4] = {0.5, 0.5, 0.5, 1.0};
+	GLfloat fogDensity = 0.0008;
+	fogMode = GL_EXP2;
+	glFogi (GL_FOG_MODE, fogMode);
+	glFogfv (GL_FOG_COLOR, fogColor);
+	glFogf (GL_FOG_DENSITY, fogDensity );
+	glHint (GL_FOG_HINT, GL_DONT_CARE);
+	glFogf (GL_FOG_START, 0);
+	glFogf (GL_FOG_END, -100);
+
+	glClearColor(0.5, 0.5, 0.5, 1.0);  /* fog color */
+      }
+      else
+	{
+
+	  glDisable(GL_FOG);
+   
+	}
       
     }
   else
     {
       glDisable(GL_LIGHTING);
+      glDisable(GL_FOG);
     }
 
-  
-  //creating the spheres
-
- 
-
-  for(auto it = spheres.begin(); it != spheres.end(); it++) {
-  glPushMatrix(); 
-
-    double alpha = 0;
-	
-    //for each particle, reference the prevLocations
-    glLineWidth(POINT_LINE_SIZE);
-    glBegin(GL_LINE_STRIP);
-    for(auto sphereIterator =  ((*it)->center).prevLocations.begin(); sphereIterator !=  ((*it)->center).prevLocations.end(); sphereIterator++)
-      {
- 	glColor4f(1, 1, 0, alpha);
- 	//glColor4f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z, alpha);
- 	glVertex3f((*sphereIterator).x, (*sphereIterator).y,(*sphereIterator).z);
-
-	    
- 	alpha += 0.15;
-      }
-
-    glEnd();
-
-    glTranslatef(((*it)->center).location.x, ((*it)->center).location.y, ((*it)->center).location.z);
-    glutSolidSphere(1, 18, 18);
-	
-    //glColor3f(((*it)->center).color.x, ((*it)->center).color.y, ((*it)->center).color.z);
-    //glColor3f(1.0, 1.0, 0);
-    //glutSolidSphere(2, 18, 18);
-    
- glPopMatrix();    
-  }
+  fireworks();
 
 
- switch(renderingType){
-  case RENDERING_TRAIL:
-    glLineWidth(POINT_LINE_SIZE);
-
-    
-    for(auto it = particles.begin(); it != particles.end(); it++) {
-      glPushMatrix();
-      double alpha = 0;
-	
-      glBegin(GL_LINE_STRIP);	
-      //for each particle, reference the prevLocations
-      for(auto particleIterator =  (*it)->prevLocations.begin(); particleIterator !=  (*it)->prevLocations.end(); particleIterator++)
- 	{
- 	  glColor4f((*it)->color.x, (*it)->color.y, (*it)->color.z, alpha);
- 	  glVertex3f( (*particleIterator).x,(*particleIterator).y, (*particleIterator).z);
-
- 	  alpha += 0.1;
- 	}
-      //glVertex3f((*it)->location.x, (*it)->location.y, (*it)->location.z);
-      //glVertex3f((*it)->previousLocation.x, (*it)->previousLocation.y, (*it)->previousLocation.z);
-      glEnd();
-      glPopMatrix();
-    }
-    
-    break;
-    
-  default:
-    glPushMatrix();
-    glPointSize(POINT_LINE_SIZE);
-    glBegin(GL_POINTS);
-    for(auto it = particles.begin(); it != particles.end(); it++) {
-
-      glColor3f((*it)->color.x, (*it)->color.y, (*it)->color.z);
-      glVertex3f((*it)->location.x, (*it)->location.y, (*it)->location.z);
-    }
-    glEnd();
-    glPopMatrix();
-  }
   
 
  
- //drawAxes(60);
+  //drawAxes(60);
  
- //front wall
+  //front wall
   glPushMatrix();
   glColor4f(0.49, 0.61, 0.75, 0.8);
   glTranslatef(1,25,280);
@@ -993,24 +844,24 @@ void display()
 
   /* 
      glUseProgram(refractShader);
-      int id;
+     int id;
  
-      id = glGetUniformLocation(refractShader,"MVMatrix");
-      if (id>=0) glUniform1f(id,X);
-      id = glGetUniformLocation(refractShader,"MVPMatrix");
-      if (id>=0) glUniform1f(id,Y);
-      id = glGetUniformLocation(refractShader,"NormalMatrix");
-      if (id>=0) glUniform1f(id,Z);
-      id = glGetUniformLocation(refractShader,"TextureMatrix");
-      if (id>=0) glUniform1f(id,time);
+     id = glGetUniformLocation(refractShader,"MVMatrix");
+     if (id>=0) glUniform1f(id,X);
+     id = glGetUniformLocation(refractShader,"MVPMatrix");
+     if (id>=0) glUniform1f(id,Y);
+     id = glGetUniformLocation(refractShader,"NormalMatrix");
+     if (id>=0) glUniform1f(id,Z);
+     id = glGetUniformLocation(refractShader,"TextureMatrix");
+     if (id>=0) glUniform1f(id,time);
 
-   //  Draw the teapot or cube
+     //  Draw the teapot or cube
 
-   glEnable(GL_TEXTURE_2D);
-   glutSolidTeapot(1.0);
-   glDisable(GL_TEXTURE_2D);
-   //  No shader for what follows
-   glUseProgram(0);
+     glEnable(GL_TEXTURE_2D);
+     glutSolidTeapot(1.0);
+     glDisable(GL_TEXTURE_2D);
+     //  No shader for what follows
+     glUseProgram(0);
   */
   //differentAngle();
    
@@ -1053,7 +904,15 @@ void keyboard(unsigned char key, int x, int y)
     case 'D':
       if (diffuse > 0) diffuse -= 1;
       break;
-
+      
+    case 'f':
+    case 'F':
+      if (fogMode)
+	fogMode = 0;
+      else
+	fogMode = 1;
+      
+      break;
     case 'L':
     case 'l':
       if(light)
@@ -1063,9 +922,10 @@ void keyboard(unsigned char key, int x, int y)
       break;
 
     case 'q':
-      Ey -= 3;
-      Ly -= 3;
-
+      if (Ey > -1){
+	Ey -= 3;
+	Ly -= 3;
+      }
       break;
     case 'Q':
       Ey += 3;
@@ -1087,7 +947,7 @@ void keyboard(unsigned char key, int x, int y)
       movX -= 1;
       break;
 
-   case 'y':
+    case 'y':
       movY += 1;
       break;
 
@@ -1111,7 +971,7 @@ void keyboard(unsigned char key, int x, int y)
   if(light)
     printf("ambient %d specular %d diffuse %d\n", ambient, specular, diffuse);
 
-  //printf("movX %d movY %d movZ %d\n",movX, movY,movZ);
+  printf("movX %d movY %d movZ %d\n",movX, movY,movZ);
   glutPostRedisplay();
 }
 
@@ -1213,24 +1073,24 @@ void change_rendering_type(int value) {
  */
 char* ReadText(char *file)
 {
-   int   n;
-   char* buffer;
-   //  Open file
-   FILE* f = fopen(file,"rt");
-   if (!f) Fatal("Cannot open text file %s\n",file);
-   //  Seek to end to determine size, then rewind
-   fseek(f,0,SEEK_END);
-   n = ftell(f);
-   rewind(f);
-   //  Allocate memory for the whole file
-   buffer = (char*)malloc(n+1);
-   if (!buffer) Fatal("Cannot allocate %d bytes for text file %s\n",n+1,file);
-   //  Snarf the file
-   if (fread(buffer,n,1,f)!=1) Fatal("Cannot read %d bytes for text file %s\n",n,file);
-   buffer[n] = 0;
-   //  Close and return
-   fclose(f);
-   return buffer;
+  int   n;
+  char* buffer;
+  //  Open file
+  FILE* f = fopen(file,"rt");
+  if (!f) Fatal("Cannot open text file %s\n",file);
+  //  Seek to end to determine size, then rewind
+  fseek(f,0,SEEK_END);
+  n = ftell(f);
+  rewind(f);
+  //  Allocate memory for the whole file
+  buffer = (char*)malloc(n+1);
+  if (!buffer) Fatal("Cannot allocate %d bytes for text file %s\n",n+1,file);
+  //  Snarf the file
+  if (fread(buffer,n,1,f)!=1) Fatal("Cannot read %d bytes for text file %s\n",n,file);
+  buffer[n] = 0;
+  //  Close and return
+  fclose(f);
+  return buffer;
 }
 
 /*
@@ -1238,19 +1098,19 @@ char* ReadText(char *file)
  */
 void PrintShaderLog(int obj,char* file)
 {
-   int len=0;
-   glGetShaderiv(obj,GL_INFO_LOG_LENGTH,&len);
-   if (len>1)
-   {
+  int len=0;
+  glGetShaderiv(obj,GL_INFO_LOG_LENGTH,&len);
+  if (len>1)
+    {
       int n=0;
       char* buffer = (char *)malloc(len);
       if (!buffer) Fatal("Cannot allocate %d bytes of text for shader log\n",len);
       glGetShaderInfoLog(obj,len,&n,buffer);
       fprintf(stderr,"%s:\n%s\n",file,buffer);
       free(buffer);
-   }
-   glGetShaderiv(obj,GL_COMPILE_STATUS,&len);
-   if (!len) Fatal("Error compiling %s\n",file);
+    }
+  glGetShaderiv(obj,GL_COMPILE_STATUS,&len);
+  if (!len) Fatal("Error compiling %s\n",file);
 }
 
 /*
@@ -1258,18 +1118,18 @@ void PrintShaderLog(int obj,char* file)
  */
 void PrintProgramLog(int obj)
 {
-   int len=0;
-   glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&len);
-   if (len>1)
-   {
+  int len=0;
+  glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&len);
+  if (len>1)
+    {
       int n=0;
       char* buffer = (char *)malloc(len);
       if (!buffer) Fatal("Cannot allocate %d bytes of text for program log\n",len);
       glGetProgramInfoLog(obj,len,&n,buffer);
       fprintf(stderr,"%s\n",buffer);
-   }
-   glGetProgramiv(obj,GL_LINK_STATUS,&len);
-   if (!len) Fatal("Error linking program\n");
+    }
+  glGetProgramiv(obj,GL_LINK_STATUS,&len);
+  if (!len) Fatal("Error linking program\n");
 }
 
 /*
@@ -1277,19 +1137,19 @@ void PrintProgramLog(int obj)
  */
 int CreateShader(GLenum type,char* file)
 {
-   //  Create the shader
-   int shader = glCreateShader(type);
-   //  Load source code from file
-   char* source = ReadText(file);
-   glShaderSource(shader,1,(const char**)&source,NULL);
-   free(source);
-   //  Compile the shader
-   fprintf(stderr,"Compile %s\n",file);
-   glCompileShader(shader);
-   //  Check for errors
-   PrintShaderLog(shader,file);
-   //  Return name
-   return shader;
+  //  Create the shader
+  int shader = glCreateShader(type);
+  //  Load source code from file
+  char* source = ReadText(file);
+  glShaderSource(shader,1,(const char**)&source,NULL);
+  free(source);
+  //  Compile the shader
+  fprintf(stderr,"Compile %s\n",file);
+  glCompileShader(shader);
+  //  Check for errors
+  PrintShaderLog(shader,file);
+  //  Return name
+  return shader;
 }
 
 /*
@@ -1297,22 +1157,22 @@ int CreateShader(GLenum type,char* file)
  */
 int CreateShaderProg(char* VertFile,char* FragFile)
 {
-   //  Create program
-   int prog = glCreateProgram();
-   //  Create and compile vertex shader
-    int vert = CreateShader(GL_VERTEX_SHADER  ,VertFile);
-   //  Create and compile fragment shader
-   int frag = CreateShader(GL_FRAGMENT_SHADER,FragFile);
-   // Attach vertex shader
-   glAttachShader(prog,vert);
-   //  Attach fragment shader
-   glAttachShader(prog,frag);
-   //  Link program
-   glLinkProgram(prog);
-   //  Check for errors
-   PrintProgramLog(prog);
-   //  Return name
-   return prog;
+  //  Create program
+  int prog = glCreateProgram();
+  //  Create and compile vertex shader
+  int vert = CreateShader(GL_VERTEX_SHADER  ,VertFile);
+  //  Create and compile fragment shader
+  int frag = CreateShader(GL_FRAGMENT_SHADER,FragFile);
+  // Attach vertex shader
+  glAttachShader(prog,vert);
+  //  Attach fragment shader
+  glAttachShader(prog,frag);
+  //  Link program
+  glLinkProgram(prog);
+  //  Check for errors
+  PrintProgramLog(prog);
+  //  Return name
+  return prog;
 
 }
 
@@ -1335,7 +1195,7 @@ void initGraphics(int argc, char *argv[])
   glutKeyboardFunc(keyboard);
   glutSpecialFunc(special);
   glutReshapeFunc(reshape);
-  glutIdleFunc(animate);
+  glutIdleFunc(idle);
   
   glEnable(GL_DEPTH_TEST);
   //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -1380,33 +1240,34 @@ void initGraphics(int argc, char *argv[])
   glutAddMenuEntry("Trails", 1);
     
   auto main_menu = glutCreateMenu(NULL);
-  glutAddSubMenu("Number of Spheres", sphere_rate_submenu);
+  glutAddSubMenu("Number of Fireworks", sphere_rate_submenu);
   glutAddSubMenu("Gravity", gravity_power_submenu);
-  glutAddSubMenu("Lifetime of Spheres", sphere_ttl_submenu);
+  glutAddSubMenu("Lifetime of Fireworks", sphere_ttl_submenu);
   glutAddSubMenu("Number of Particles", sphere_particles_submenu);
   glutAddSubMenu("Lifetime of Particles", particle_ttl_submenu);
   glutAddSubMenu("Rendering Type", rendering_type_submenu);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   
   //loading textures -left,right,front,back,up and down
-  skyTex[0] = LoadTexBMP("darkcity_lf.bmp",0);
-  skyTex[1] = LoadTexBMP("darkcity_rt.bmp",0);
-  skyTex[2] = LoadTexBMP("darkcity_ft.bmp",0);
-  skyTex[3] = LoadTexBMP("darkcity_bk.bmp",0);
-  skyTex[4] = LoadTexBMP("darkcity_up.bmp",0);
-  skyTex[5] = LoadTexBMP("darkcity_dn.bmp",0);
+  skyTex[0] = LoadTexBMP("darkcity_lf.bmp",1);
+  skyTex[1] = LoadTexBMP("darkcity_rt.bmp",1);
+  skyTex[2] = LoadTexBMP("darkcity_ft.bmp",1);
+  skyTex[3] = LoadTexBMP("darkcity_bk.bmp",1);
+  skyTex[4] = LoadTexBMP("darkcity_up.bmp",1);
+  skyTex[5] = LoadTexBMP("darkcity_dn.bmp",1);
 
-      //texture for water
+  //texture for water
   waterTex = LoadTexBMP("reflection.bmp",1);  
   marbleTex = LoadTexBMP("marbleTex.bmp",1);
   
-      //loading objects
+  //loading objects
   objTree = LoadOBJ("Tree.obj");
   objBlocks = LoadOBJ("predator.obj");
   //ReadDEM("saddleback.dem");
 
   refractShader = CreateShaderProg("refract.vert","refract.frag");
-  
+
+   
   ErrCheck("init");
 }
 

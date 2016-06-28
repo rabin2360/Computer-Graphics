@@ -104,6 +104,8 @@ unsigned int LoadTexBMP(const char* file, int mode)
   //  Scale linearly when image size doesn't match
   if(mode)
     {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
       glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
