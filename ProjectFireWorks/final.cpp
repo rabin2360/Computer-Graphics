@@ -1,9 +1,7 @@
 //////////////////////////////////////////////////////////////////
 // Author: Rabin Ranabhat
-//
+// Project: Fireworks rendering using particles effect
 /////////////////////////////////////////////////////////////////
-
-
 
 #include "final.h"
 
@@ -72,12 +70,6 @@ int dim = 100;
 //object variables
 int objTree;
 int objBlocks;
-
-//terrain
-float z[65][65];       //  DEM data
-float zmin=+1e8;       //  DEM lowest location
-float zmax=-1e8;       //  DEM highest location
-float zmag=0.6;          //  DEM magnification
 
 //water variables
 int waterTex;
@@ -160,7 +152,6 @@ static void ball(double x,double y,double z,double r)
 
   //  Offset, scale and rotate
   glTranslated(x,y,z);
-  //glScaled(r,r,r);
 
   //  White ball
   glColor3f(1,1,1);
@@ -371,11 +362,11 @@ void drawWaterRipples(int sx, int sy, int sz,int tx, int ty, int tz)
 	    }
 	  else
 	    {
-	      /* 	    v1x = v1x; */
+	      /*v1x = v1x; */
 	      v1y = zVal(v1x, (j - 1) * delta - 1, t);
 	      v1z = (j - 1) * delta - 1;
 
-	      /* 	    v3x = v3x; */
+	      /*v3x = v3x; */
 	      v3y = zVal(v3x, v2z, t);
 	      v3z = v2z;
 
@@ -454,7 +445,6 @@ void fireworks()
 
     double alpha = 0;
 	
-    //for each particle, reference the prevLocations
     glLineWidth(POINT_LINE_SIZE);
     glBegin(GL_LINE_STRIP);
     for(auto sphereIterator =  ((*it)->center).prevLocations.begin(); sphereIterator !=  ((*it)->center).prevLocations.end(); sphereIterator++)
@@ -606,32 +596,21 @@ void display()
 
 
   glPushAttrib(GL_TRANSFORM_BIT|GL_ENABLE_BIT|GL_DEPTH_BUFFER_BIT);
+
   glPushMatrix();
-
   glEnable(GL_BLEND);
-
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  
-  //glDisable(GL_DEPTH_TEST);
-  //glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+
   glEnable(GL_STENCIL_TEST);
-  
-  glStencilFunc(GL_ALWAYS, 1, 0xFF);
-  glStencilOp(GL_REPLACE,GL_REPLACE, GL_REPLACE);
+  glStencilFunc(GL_ALWAYS, 1, 0xFFFFFFFF);
+  glStencilOp(GL_KEEP,GL_KEEP, GL_REPLACE);
   glStencilMask(0xFF);
   glDepthMask(GL_FALSE);
 
   //important, this will make sure that the inverted trees do not appear below the surface but just on the water
   glClear(GL_STENCIL_BUFFER_BIT);
   
-  //draw the water
-  //glPushAttrib(GL_DEPTH_BUFFER_BIT);
-  //glEnable(GL_DEPTH_TEST);
   drawWaterRipples(300,300,300,0,19,0);
-  //glEnable(GL_DEPTH_TEST);
-  //glPopAttrib();
-  //glColorMask(1,1,1,1);
-  //glEnable(GL_DEPTH_TEST);
   
   glStencilFunc(GL_EQUAL, 1, 0xFF);
   glStencilMask(0x00);
@@ -685,8 +664,7 @@ void display()
       float Shininess[] =  {0};
       
       //Light position
-      //float Position[]  = {dist*Cos(zh),ylight,dist*Sin(zh),1.0};
-      float Position[] = {-306+movX,234+movY,301+movZ};
+      float Position[] = {-306,234,301};
       //color for the rotating light
       glColor3f(1,1,1);
 
@@ -762,7 +740,6 @@ void display()
   ErrCheck("display");
 }
 
-///////////////////////////////////////////////
 
 void keyboard(unsigned char key, int x, int y)
 {
@@ -882,14 +859,14 @@ void keyboard(unsigned char key, int x, int y)
       break;
     }
 
-  if(light)
+  /*  if(light)
     printf("ambient %d specular %d diffuse %d\n", ambient, specular, diffuse);
 
   printf("movX %d movY %d movZ %d\n",movX, movY,movZ);
+  */
   glutPostRedisplay();
 }
 
-///////////////////////////////////////////////
 
 //special characters function
 static void special(int k, int x, int y) {
@@ -907,21 +884,15 @@ static void special(int k, int x, int y) {
     break;
 
   case GLUT_KEY_LEFT:
-    //rotate left
-    // if(angle>-40){
     angle -= 5;
     Lx = 2*Sin(angle);
     Lz = -2*Cos(angle);
-    //}
     break;
 
   case GLUT_KEY_RIGHT:
-    //rotate right
-    // if(angle<40){
     angle += 5;
     Lx = 2*Sin(angle);
     Lz = -2*Cos(angle);
-    // }
     break;
 
   case GLUT_KEY_PAGE_UP:
@@ -937,10 +908,9 @@ static void special(int k, int x, int y) {
     
   }
 
-  printf("Ex %f Ey %f Ez %f Lx %f, Ly%f, Lz %f, angle %d\n", Ex,Ey,Ez, Lx, Ly, Lz, angle);
+  //printf("Ex %f Ey %f Ez %f Lx %f, Ly%f, Lz %f, angle %d\n", Ex,Ey,Ez, Lx, Ly, Lz, angle);
   glutPostRedisplay();
 }
-////////////////////////////////////////////////////
 
 void reshape(int width, int height)
 {
@@ -977,7 +947,6 @@ void change_rendering_type(int value) {
   renderingType = value;
 }
 
-///////////////////////////////////////////////
 void initGraphics(int argc, char *argv[])
 {
   initData();
@@ -987,8 +956,8 @@ void initGraphics(int argc, char *argv[])
   glutInitWindowSize(800, 600);
   glutInitWindowPosition(100, 100);
 
-  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-  glutCreateWindow("Project: Particles");
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);
+  glutCreateWindow("Final Project: Particles");
 
   if (glewInit()!=GLEW_OK) Fatal("Error initializing GLEW\n");
       
@@ -1008,7 +977,6 @@ void initGraphics(int argc, char *argv[])
   glutAddMenuEntry("A lot ", 5);
     
   auto gravity_power_submenu = glutCreateMenu(change_gravity);
-  glutAddMenuEntry("No Gravity", 0);
   glutAddMenuEntry("Low", 1);
   glutAddMenuEntry("Medium", 2);
   glutAddMenuEntry("High", 3);
@@ -1061,7 +1029,6 @@ void initGraphics(int argc, char *argv[])
   ErrCheck("init");
 }
 
-/////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
