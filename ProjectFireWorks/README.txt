@@ -11,7 +11,7 @@ Things to consider:
 5. The water also shows the reflection of the trees around the pool. I couldn't figure out how to make the reflections move like the water surface. Nonetheless, that's another feature I am proud of in this project.
 6. I have also included the fog feature in the scene. This feature can be toggled on/off by pressing the button 'f'.
 7. I am also proud of the tree objects around the pool. Even though I didn't create the objects from scratch, I modified the .mtl file so that the tree would render properly along with proper texture being applied to the tree trunk and the leaves.
-8. I have also included another object for decoration purposes around the pool. However, you have to press the button 'w' to see the objects because it slows down my computer considerably. If your machine is up to the par, press the button and please enjoy!
+8. I have also included another object for decoration purposes around the pool. Changed the .mtl file for the object to suit my needs.
 9. I have changed the loadtexbmp.c file where you can flag it to use mipmap function when loading the texture or not use it. The flag to use the mipmap option is '1', other '0' can be used as the flag.
 
 NOTE: Sorry the code isn't pretty! I wish I had more time to pretty it up.
@@ -25,6 +25,5 @@ The following keys perform the following functions:
 6. Page Up: Will look up.
 7. Page Down: Will look down.
 8. 'T/t': Will toggle the texture on the water surface.
-9. 'W/w': Will display the extra pillar objects on the sides of the pool.
-10. 'F/f': Will toggle the display of fog.
-
+9. 'F/f': Will toggle the display of fog.
+10. 'Esc': To escape the project.
